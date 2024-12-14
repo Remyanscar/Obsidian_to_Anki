@@ -5,6 +5,7 @@ import { CachedMetadata } from 'obsidian'
 import * as c from './constants'
 
 import showdownHighlight from 'showdown-highlight'
+import showdownFootnotes from 'showdown-footnotes'
 
 const ANKI_MATH_REGEXP:RegExp = /(\\\[[\s\S]*?\\\])|(\\\([\s\S]*?\\\))/g
 const HIGHLIGHT_REGEXP:RegExp = /==(.*?)==/g
@@ -29,7 +30,7 @@ let converter: Converter = new Converter({
 	tables: true, tasklists: true,
 	simpleLineBreaks: true,
 	requireSpaceBeforeHeadingText: true,
-	extensions: [showdownHighlight]
+	extensions: [showdownHighlight, showdownFootnotes]
 })
 
 function escapeHtml(unsafe: string): string {
