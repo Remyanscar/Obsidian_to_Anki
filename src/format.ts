@@ -6,6 +6,7 @@ import * as c from './constants'
 
 import showdownHighlight from 'showdown-highlight'
 import showdownFootnotes from 'showdown-footnotes'
+import myExtension from './myextmdjs';
 
 const ANKI_MATH_REGEXP:RegExp = /(\\\[[\s\S]*?\\\])|(\\\([\s\S]*?\\\))/g
 const HIGHLIGHT_REGEXP:RegExp = /==(.*?)==/g
@@ -30,7 +31,10 @@ let converter: Converter = new Converter({
 	tables: true, tasklists: true,
 	simpleLineBreaks: true,
 	requireSpaceBeforeHeadingText: true,
-	extensions: [showdownHighlight, showdownFootnotes]
+
+	splitAdjacentBlockquotes: true,
+
+	extensions: [showdownHighlight, showdownFootnotes, myExtension]
 })
 
 function escapeHtml(unsafe: string): string {
@@ -75,6 +79,12 @@ export class FormatConverter {
 			c.OBS_INLINE_MATH_REGEXP,
 			"\\($1\\)"
 		)
+	}
+
+	removeRegexFromStrings(inputArray: string[]): string[] {
+		const regex = /\n[> ]*/gm;
+
+		return inputArray.map(str => str.replace(regex, "\n"));
 	}
 
 	cloze_repl(_1: string, match_id: string, match_content: string): string {
@@ -145,8 +155,10 @@ export class FormatConverter {
 	}
 
 	format(note_text: string, cloze: boolean, highlights_to_cloze: boolean): string {
+
 		note_text = this.obsidian_to_anki_math(note_text)
 		//Extract the parts that are anki math
+
 		let math_matches: string[]
 		let inline_code_matches: string[]
 		let display_code_matches: string[]
@@ -166,7 +178,12 @@ export class FormatConverter {
 		note_text = note_text.replace(HIGHLIGHT_REGEXP, String.raw`<mark>$1</mark>`)
 		note_text = this.decensor(note_text, DISPLAY_CODE_REPLACE, display_code_matches, false)
 		note_text = this.decensor(note_text, INLINE_CODE_REPLACE, inline_code_matches, false)
+
+		console.log("------------------------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n------------------Before---------------\n\n\n", note_text, "-------------hier-----------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n---------------------------------\n\n\n")
 		note_text = converter.makeHtml(note_text)
+		console.log("------------------------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n------------------After---------------\n\n\n", note_text,"-------------hier-----------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n---------------------------------\n\n\n")
+
+		math_matches = this.removeRegexFromStrings(math_matches)
 		note_text = this.decensor(note_text, MATH_REPLACE, math_matches, true).trim()
 		// Remove unnecessary paragraph tag
 		if (note_text.startsWith(PARA_OPEN) && note_text.endsWith(PARA_CLOSE)) {
@@ -175,10 +192,9 @@ export class FormatConverter {
 		if (add_highlight_css) {
 			note_text = '<link href="' + c.CODE_CSS_URL + '" rel="stylesheet">' + note_text
 		}
+		// console.log("------------------------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n------------------hier---------------\n\n\n")
+		// console.log(note_text)
+		// console.log("-------------hier-----------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n---------------------------------\n\n\n")
 		return note_text
 	}
-
-
-
-
 }
