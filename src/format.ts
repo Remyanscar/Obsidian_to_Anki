@@ -62,8 +62,9 @@ export class FormatConverter {
         return "obsidian://open?vault=" + encodeURIComponent(this.vault_name) + String.raw`&file=` + encodeURIComponent(link)
     }
 
-	format_note_with_url(note: AnkiConnectNote, url: string, field: string): void {
-		note.fields[field] += '<br><a href="' + url + '" class="obsidian-link">Obsidian</a>'
+	// TODO OSKAR extra linia po linku
+	format_note_with_url(note, url, field) {
+		note.fields[field] += '<br><br><a href="' + url + '" class="obsidian-link">Obsidian</a>';
 	}
 
 	format_note_with_frozen_fields(note: AnkiConnectNote, frozen_fields_dict: Record<string, Record<string, string>>): void {
@@ -180,6 +181,8 @@ export class FormatConverter {
 		note_text = this.decensor(note_text, INLINE_CODE_REPLACE, inline_code_matches, false)
 
 		console.log("------------------------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n------------------Before---------------\n\n\n", note_text, "-------------hier-----------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n---------------------------------\n\n\n")
+		note_text = note_text.replace(/^(?:Back:|\-\->)$/mg, '');
+		note_text = note_text.replace(/^——————————————————————————————————————————————————————$\n/mg, '');
 		note_text = converter.makeHtml(note_text)
 		console.log("------------------------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n------------------After---------------\n\n\n", note_text,"-------------hier-----------------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n---------------------------------\n\n\n")
 

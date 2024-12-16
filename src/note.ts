@@ -126,11 +126,21 @@ export class Note extends AbstractNote {
         }
     }
 
-    getTags(): string[] {
-        if (this.split_text[this.split_text.length-1].startsWith(TAG_PREFIX)) {
-            return this.split_text.pop().slice(TAG_PREFIX.length).split(TAG_SEP)
-        } else {
-            return []
+    // getTags(): string[] {
+    //     if (this.split_text[this.split_text.length-1].startsWith(TAG_PREFIX)) {
+    //         return this.split_text.pop().slice(TAG_PREFIX.length).split(TAG_SEP)
+    //     } else {
+    //         return []
+    //     }
+    // }
+    // TODO OSKAR tagi w notatce jako komentarz html
+    getTags() {
+        this.split_text[this.split_text.length - 1] = this.split_text[this.split_text.length - 1].replace(/(?:^<!--(Tags: .*) -->$)/, '$1');
+        if (this.split_text[this.split_text.length - 1].startsWith(TAG_PREFIX)) {
+            return this.split_text.pop().slice(TAG_PREFIX.length).split(TAG_SEP);
+        }
+        else {
+            return [];
         }
     }
 
@@ -256,10 +266,15 @@ export class RegexNote {
 			highlights_to_cloze: boolean,
 			formatter: FormatConverter
 	) {
+
+        // TODO OSKAR WAZNE usun <!-- na poczatku co pojawia sie od Tags:
+        match[2] = match[2].replace(/(^ *>? *<!--$)/mg, '');
 		this.match = match
 		this.note_type = note_type
 		this.identifier = id ? parseInt(this.match.pop()) : null
 		this.tags = tags ? this.match.pop().slice(TAG_PREFIX.length).split(TAG_SEP) : []
+        // TODO OSKAR regex tagi w notatce
+        this.tags.pop();
 		this.field_names = fields_dict[note_type]
 		this.curly_cloze = curly_cloze
 		this.formatter = formatter

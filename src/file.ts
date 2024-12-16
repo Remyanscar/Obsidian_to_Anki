@@ -134,8 +134,10 @@ abstract class AbstractFile {
     }
 
     setup_global_tags() {
-        const result = this.file.match(this.data.TAG_REGEXP)
-        this.global_tags = result ? result[1] : ""
+        const result = this.file.match(this.data.TAG_REGEXP);
+        this.global_tags = result ? result[1] : "";
+        // TODO OSKAR usun - z tagow
+        this.global_tags = this.global_tags.replace(/\s*-\s+/gm, ' ');
     }
 
     getHash(): string {
