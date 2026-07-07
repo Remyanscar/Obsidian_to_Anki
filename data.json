@@ -1,0 +1,288 @@
+{
+  "settings": {
+    "CUSTOM_REGEXPS": {
+      "Podstawowy": "",
+      "assumption": "\\> \\[!assumption(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "axiom": "\\> \\[!axiom(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "claim": "\\> \\[!claim(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "conjecture": "\\> \\[!conjecture(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "corollary": "\\> \\[!corollary(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "definition": "\\> \\[!definition(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "example": "\\> \\[!exm(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "exercise": "\\> \\[!exercise(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "hypothesis": "\\> \\[!hypothesis(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "lemma": "\\> \\[!lemma(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "proposition": "\\> \\[!proposition(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "remark": "\\> \\[!remark(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "theorem": "\\> \\[!theorem(?:\\|\\S*)?\\][+-]? ([^\\n]*)\\n ?((?:^>\\n?.{1,22}(?:\\n)|^>\\n?.{23}(?<!> ###### \\`\\\\start\\{proof\\}\\`).*\\n)*)(?:(?:^> ###### \\`\\\\start\\{proof\\}\\`\\n)((?:^>\\n?.{1,14}(?:\\n)|^>\\n?.{15}(?<!> \\`\\\\stop\\{proof\\}\\`).*\\n)*)^> \\`\\\\stop\\{proof\\}\\`\\n)?(?:(?:^>[^\\n]*\\n)*(?:[ \t\r\f]*\\n)*)?",
+      "basic": ""
+    },
+    "FILE_LINK_FIELDS": {
+      "assumption": "Back",
+      "axiom": "Back",
+      "claim": "Back",
+      "conjecture": "Back",
+      "corollary": "Back",
+      "definition": "Back",
+      "example": "Back",
+      "exercise": "Back",
+      "hypothesis": "Back",
+      "lemma": "Back",
+      "proposition": "Back",
+      "remark": "Back",
+      "theorem": "Back"
+    },
+    "CONTEXT_FIELDS": {
+      "assumption": "Front"
+    },
+    "FOLDER_DECKS": {
+      "Computerorientierte Mathematik II": "",
+      "Inne": "Inne",
+      "Lineare Algebra": "",
+      "attachment": "",
+      "Computerorientierte Mathematik II/3. Lineare gewöhnliche Differentialgleichungen": "",
+      "Inne/attachment": "",
+      "Computerorientierte Mathematik II/3. Lineare gewöhnliche Differentialgleichungen/attachment": "",
+      "1. Lineare Algebra": "1. Lineare Algebra",
+      "2. Analysis": "2. Analysis",
+      "3. Diskrete Mathematik": "3. Diskrete Mathematik",
+      "4. Numerische Mathematik": "4. Numerische Mathematik",
+      "_attachment": "_attachment",
+      "1. Lineare Algebra/_attachment": "1. Lineare Algebra/_attachment",
+      "4. Numerische Mathematik/Computerorientierte Mathematik": "4. Numerische Mathematik/Computerorientierte Mathematik",
+      "Inne/_attachment": "Inne/_attachment",
+      "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's": "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODEs",
+      "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/_attachment": "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODEs/_attachment",
+      "3. Diskrete Mathematik/Aufgaben": "",
+      "3. Diskrete Mathematik/Kubek": "",
+      "3. Diskrete Mathematik/Workbench": "",
+      "3. Diskrete Mathematik/_attachment": "",
+      "3. Diskrete Mathematik/Counting": "",
+      "3. Diskrete Mathematik/Counting/Elementary Counting": "",
+      "3. Diskrete Mathematik/Counting/Elementary Counting/Useful results from elementary counting rules": "",
+      "NO_ANKI": "",
+      "NO_ANKI/2. Analysis": "",
+      "NO_ANKI/1. Lineare Algebra": "",
+      "NO_ANKI/4. Numerische Mathematik": "",
+      "NO_ANKI/Inne": "",
+      "NO_ANKI/1. Lineare Algebra/_attachment": "",
+      "NO_ANKI/4. Numerische Mathematik/Computerorientierte Mathematik": "",
+      "NO_ANKI/Inne/_attachment": "",
+      "NO_ANKI/4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's": "",
+      "NO_ANKI/4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/_attachment": "",
+      "NO_ANKI/3. Diskrete Mathematik": "",
+      "NO_ANKI/3. Diskrete Mathematik/Aufgaben": "",
+      "NO_ANKI/3. Diskrete Mathematik/Kubek": "",
+      "NO_ANKI/3. Diskrete Mathematik/Workbench": ""
+    },
+    "FOLDER_TAGS": {
+      "Computerorientierte Mathematik II": "",
+      "Inne": "",
+      "Lineare Algebra": "",
+      "attachment": "",
+      "Computerorientierte Mathematik II/3. Lineare gewöhnliche Differentialgleichungen": "",
+      "Inne/attachment": "",
+      "Computerorientierte Mathematik II/3. Lineare gewöhnliche Differentialgleichungen/attachment": "",
+      "1. Lineare Algebra": "",
+      "2. Analysis": "",
+      "3. Diskrete Mathematik": "Diskrete_Mathematik",
+      "4. Numerische Mathematik": "",
+      "_attachment": "",
+      "1. Lineare Algebra/_attachment": "",
+      "4. Numerische Mathematik/Computerorientierte Mathematik": "",
+      "Inne/_attachment": "",
+      "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's": "",
+      "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/_attachment": "",
+      "3. Diskrete Mathematik/Aufgaben": "",
+      "3. Diskrete Mathematik/Kubek": "",
+      "3. Diskrete Mathematik/Workbench": "",
+      "3. Diskrete Mathematik/_attachment": "",
+      "3. Diskrete Mathematik/Counting": "Diskrete_Mathematik::Counting",
+      "3. Diskrete Mathematik/Counting/Elementary Counting": "Diskrete_Mathematik::Counting::Elementary_Counting",
+      "3. Diskrete Mathematik/Counting/Elementary Counting/Useful results from elementary counting rules": "Diskrete_Mathematik::Counting::Elementary_Counting::Useful_results",
+      "NO_ANKI": "",
+      "NO_ANKI/2. Analysis": "",
+      "NO_ANKI/1. Lineare Algebra": "",
+      "NO_ANKI/4. Numerische Mathematik": "",
+      "NO_ANKI/Inne": "",
+      "NO_ANKI/1. Lineare Algebra/_attachment": "",
+      "NO_ANKI/4. Numerische Mathematik/Computerorientierte Mathematik": "",
+      "NO_ANKI/Inne/_attachment": "",
+      "NO_ANKI/4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's": "",
+      "NO_ANKI/4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/_attachment": "",
+      "NO_ANKI/3. Diskrete Mathematik": "",
+      "NO_ANKI/3. Diskrete Mathematik/Aufgaben": "",
+      "NO_ANKI/3. Diskrete Mathematik/Kubek": "",
+      "NO_ANKI/3. Diskrete Mathematik/Workbench": ""
+    },
+    "Syntax": {
+      "Begin Note": "<!--START\nNote type:",
+      "End Note": "<!--END-->",
+      "Begin Inline Note": "STARTI",
+      "End Inline Note": "ENDI",
+      "Target Deck Line": "TARGET DECK",
+      "File Tags Line": "tags:",
+      "Delete Note Line": "❌DELETE❌",
+      "Frozen Fields Line": "FROZEN"
+    },
+    "Defaults": {
+      "Scan Directory": "",
+      "Tag": "💠",
+      "Deck": "Obsidian",
+      "Scheduling Interval": 0,
+      "Add File Link": true,
+      "Add Context": false,
+      "CurlyCloze": false,
+      "CurlyCloze - Highlights to Clozes": false,
+      "ID Comments": true,
+      "Add Obsidian Tags": true
+    },
+    "IGNORED_FILE_GLOBS": [
+      "**/*.excalidraw.md",
+      "**/NO_ANKI/**"
+    ]
+  },
+  "Added Media": [
+    "1. Lineare Algebra/_attachment/17501bebefd4f49addc9ab6b1914e401 2_v1.png",
+    "1. Lineare Algebra/_attachment/90fe3cf9472439f0c19134eac421a3f5 2_v1.png",
+    "1. Lineare Algebra/_attachment/61dd7b1cd18357ac421975ac26c61d40 2_v1.png",
+    "1. Lineare Algebra/_attachment/8fe31a7dcc27f9894015c23561768823 2_v1.png",
+    "1. Lineare Algebra/_attachment/08ffdf450c688ab9e2dd604fcabc47a2 2_v1.png",
+    "1. Lineare Algebra/_attachment/5ca16894316d793892cc7dc468cfa193 1_v1.png",
+    "1. Lineare Algebra/_attachment/5ca16894316d793892cc7dc468cfa193 2_v1.png",
+    "1. Lineare Algebra/_attachment/b283f1ef80efa0a98a8a1c8ec4cbe1a6 3.png",
+    "1. Lineare Algebra/_attachment/cb2ceb47930ab75cabaebdbfd5dafbe8 3.png",
+    "1. Lineare Algebra/_attachment/071fc562c13cdccc5015429ee20eea5b 1_v1.png",
+    "3. Diskrete Mathematik/_attachment/59500e9f0a31982271867741efc489cf_v1.png",
+    "3. Diskrete Mathematik/_attachment/cacc800f415da9bdf9bbc720e39369f1_v1.png",
+    "3. Diskrete Mathematik/_attachment/3ca29673655c50bdd7dc48d21d510564 1.png",
+    "3. Diskrete Mathematik/_attachment/fb1d551d6dfaf233578c03f9595eb4cf 1.png",
+    "3. Diskrete Mathematik/_attachment/de96febce2ef1a9da31f9f51042354bb 1.png",
+    "3. Diskrete Mathematik/_attachment/f5b593fdea6060e9f4dbbb7191bdf3ef 1.png",
+    "3. Diskrete Mathematik/_attachment/22d9594a0b53cec15ae449f206561d09 1.png",
+    "3. Diskrete Mathematik/_attachment/2eb04cf53c89eb8c1129b5cc6cb7b69d 1.png",
+    "3. Diskrete Mathematik/_attachment/fa032a30527d9e6b8f6bc397f7416c5e_v1.png",
+    "3. Diskrete Mathematik/_attachment/ba7e7d5dc37cf7192498f42ca0245119_v1.png",
+    "3. Diskrete Mathematik/_attachment/1e6996f5c6df7cd85507cc77bef3168f_v1.png",
+    "3. Diskrete Mathematik/_attachment/6fc98de046e0a3b30ff03c0c49fc73ec_v1.png",
+    "3. Diskrete Mathematik/_attachment/568ea5ccac2104e68bbde984515c581d_v1.png",
+    "3. Diskrete Mathematik/_attachment/6cb5e5ff32c309f4e3332205d4c90879_v1.png",
+    "3. Diskrete Mathematik/_attachment/503812fcd25ebf79469178a33a1c2067_v1.png",
+    "3. Diskrete Mathematik/_attachment/aad793b94f0d1c9a977df1ee87544924_v1.png",
+    "3. Diskrete Mathematik/_attachment/d7b0d9845d50362868d6c542740ee8b1_v1.png",
+    "3. Diskrete Mathematik/_attachment/1768d41f9660db3d60460d57ef110be9_v1.png",
+    "3. Diskrete Mathematik/_attachment/3a44652435f5384b5675d8cf9e01a950_v1.png",
+    "3. Diskrete Mathematik/_attachment/a0c73938913055bcc630372946407886_v1.png",
+    "3. Diskrete Mathematik/_attachment/019fe1bf21d8c4ba806db2de00bdfabe_v1.png"
+  ],
+  "File Hashes": {
+    "Inne/Math Callouts.md": "c23466de06b162bd05af83bf095cf7bf",
+    "Inne/Markdown.md": "c38f82387ef9ee29ebf05e6a7b6b37ae",
+    "Inne/Callouts.md": "507b25bc958ddfc76fac2c59891a79e9",
+    "4. Numerische Mathematik/_Numerik_Notes.md": "c2f5ff7059df841f60f5764c04fafec1",
+    "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/linear erster Ordnung.md": "d41d8cd98f00b204e9800998ecf8427e",
+    "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/Triviale Differentialgleichung.md": "4cacb7e9089056bfbd60121180a47fc6",
+    "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/Lineare gewöhnliche Differentialgleichungen.md": "1aa40ee743c49283af43390837b7a79d",
+    "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/Differentialgleichungen.md": "87c58b3c782e74797b393df8075c1e01",
+    "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/Differentialgleichungen in getrennten Variablen.md": "10d70d14a07f5ba8fff5114451f69e9f",
+    "4. Numerische Mathematik/Computerorientierte Mathematik/Lineare ODE's/Anfangswertproblem.md": "5b8fac72f02afbd8af8991d1c6af98a8",
+    "3. Diskrete Mathematik/adas.md": "c0f4bbc94b293388915ea87e52d2ed2f",
+    "3. Diskrete Mathematik/_Diskrete_notes.md": "431f6b8d6331e4b79429c7a3c4c12ed6",
+    "1. Lineare Algebra/Zeilenstufenform einer Matrix.md": "d155c1bb8b8071ac2d996e4f3f6c7f18",
+    "1. Lineare Algebra/Vektorräume.md": "698234fc08e2437927ac84b95912e121",
+    "1. Lineare Algebra/Lineare Gleichungssysteme.md": "57bce157315053af68de269b21cc2284",
+    "1. Lineare Algebra/Linear unabhängige Teilmengen.md": "d9d1a1f62d61f65bf42d5f5d04658e6b",
+    "1. Lineare Algebra/Gaußsche Lösungsverfahren.md": "c7ecac1a05a870956851c508a3d32515",
+    "1. Lineare Algebra/Erzeugendensysteme.md": "82135994a4f4944bbbcc1b6f9a6941a2",
+    "1. Lineare Algebra/Basen.md": "a72a66e382a317c1b9210131c20246d9",
+    "1. Lineare Algebra/(2x2)-lineare Gleichungssyste.md": "e944cc235c39c00edac9d7d126df301b",
+    "2. Analysis/_Analysis_notes.md": "d41d8cd98f00b204e9800998ecf8427e",
+    "1. Lineare Algebra/_Lina_notes.md": "d41d8cd98f00b204e9800998ecf8427e",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Useful results from elementary counting rules/Gauß Formula.md": "7088c767d0a582d8fa30eb32b2ae6044",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Useful results from elementary counting rules/Characteristic Function of a Subset.md": "878ad42ecb7f8f6af2f60c6b06a3ad39",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Useful results from elementary counting rules/Binomial Coefficients.md": "40353d47946fa271e8f0ef4d9bfe90f9",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Rule of Product I & II (RoP-I & II).md": "e8454137ede6dca54972de33a65fdb5e",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Rule of Sum (RoS).md": "8b23cd41e9c1759eb4852135045ccfd5",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Rule of Division (RoD).md": "d15258a6f61b72b63606a6dcc496d6a1",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Double Counting Rule (2CR).md": "1bffe2dfe340057e87212fed17e891e8",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Pigeonhole Principle (PHP).md": "a3bf0f71681d1d3941cebacfce6c5a24",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Rule of Bijection (RoB).md": "02f1bfdd59bb979242ebef9265ff3acb",
+    "3. Diskrete Mathematik/Counting/Elementary Counting/Elementary Rules of Counting.md": "a19078135dbd6c9a291ff8d5b301aec8",
+    "3. Diskrete Mathematik/Counting/Counting.md": "7562a5f9f5483e220952d6d515afb21a"
+  },
+  "fields_dict": {
+    "assumption": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "axiom": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "basic": [
+      "Front",
+      "Back"
+    ],
+    "claim": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "conjecture": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "corollary": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "definition": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "example": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "exercise": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "hypothesis": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "lemma": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "Podstawowy": [
+      "Front",
+      "Back"
+    ],
+    "proposition": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "remark": [
+      "Front",
+      "Back",
+      "Proof"
+    ],
+    "theorem": [
+      "Front",
+      "Back",
+      "Proof"
+    ]
+  }
+}

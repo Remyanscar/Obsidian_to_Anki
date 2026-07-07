@@ -127,6 +127,9 @@ export class Note extends AbstractNote {
     }
 
     getTags(): string[] {
+        // TODO OSKAR [transformuje "<!--Tags: xyz-->" do "Tags: xyz"] (✅)
+        this.split_text[this.split_text.length - 1] = this.split_text[this.split_text.length - 1].replace(/(?:^<!--(Tags:.*)-->$)/, '$1');
+        // end
         if (this.split_text[this.split_text.length-1].startsWith(TAG_PREFIX)) {
             return this.split_text.pop().slice(TAG_PREFIX.length).split(TAG_SEP)
         } else {
@@ -256,10 +259,17 @@ export class RegexNote {
 			highlights_to_cloze: boolean,
 			formatter: FormatConverter
 	) {
+
+        // TODO OSKAR [WAZNE! usun "<!--" na początku, co pojawia się od "Tags:"] (niepotrzebne ❌)
+        // match[2] = match[2].replace(/(^ *>? *<!--$)/mg, '');
+        // chyba do tego miejsca
 		this.match = match
 		this.note_type = note_type
 		this.identifier = id ? parseInt(this.match.pop()) : null
 		this.tags = tags ? this.match.pop().slice(TAG_PREFIX.length).split(TAG_SEP) : []
+        // TODO OSKAR [regex tagi w notatce] (niewiadome ❌)
+        // to niewiadomo, co robi i gdzie jest
+        this.tags.pop();
 		this.field_names = fields_dict[note_type]
 		this.curly_cloze = curly_cloze
 		this.formatter = formatter

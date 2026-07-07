@@ -5,6 +5,11 @@ import { CachedMetadata } from 'obsidian'
 import * as c from './constants'
 
 import showdownHighlight from 'showdown-highlight'
+// TODO OSKAR [showdown imports] (✅)
+import showdownFootnotes from 'showdown-footnotes'
+import GithubCallout from './myextmdjs';
+import list_corrector_module from './list-corrector';
+// end
 
 const ANKI_MATH_REGEXP:RegExp = /(\\\[[\s\S]*?\\\])|(\\\([\s\S]*?\\\))/g
 const HIGHLIGHT_REGEXP:RegExp = /==(.*?)==/g
@@ -29,7 +34,10 @@ let converter: Converter = new Converter({
 	tables: true, tasklists: true,
 	simpleLineBreaks: true,
 	requireSpaceBeforeHeadingText: true,
-	extensions: [showdownHighlight]
+	// TODO OSKAR [showdown settings] (✅)
+	splitAdjacentBlockquotes: true,
+	extensions: [showdownHighlight, showdownFootnotes, list_corrector_module, GithubCallout]
+	// end
 })
 
 function escapeHtml(unsafe: string): string {
@@ -58,7 +66,11 @@ export class FormatConverter {
     }
 
 	format_note_with_url(note: AnkiConnectNote, url: string, field: string): void {
-		note.fields[field] += '<br><a href="' + url + '" class="obsidian-link">Obsidian</a>'
+		// TODO OSKAR [dodaje extra <br> przed linkiem do Obsidian] (✅)
+		note.fields[field] += '<br><br><a href="' + url + '" class="obsidian-link">Obsidian</a>'
+		// usuwa nadmiar
+		note.fields[field] = note.fields[field].replace(/<\/p><br><br><a href/g, '</p><br><a href')
+		// end
 	}
 
 	format_note_with_frozen_fields(note: AnkiConnectNote, frozen_fields_dict: Record<string, Record<string, string>>): void {
@@ -75,6 +87,14 @@ export class FormatConverter {
 			"\\($1\\)"
 		)
 	}
+
+	// TODO OSKAR [dodaje funkcje do usuwania "> " z tekstu notatki] (✅)
+	removeRegexFromStrings(inputArray: string[]): string[] {
+		const regex = /\n[> ]*/gm;
+
+		return inputArray.map(str => str.replace(regex, "\n"));
+	}
+	// end
 
 	cloze_repl(_1: string, match_id: string, match_content: string): string {
 		if (match_id == undefined) {
@@ -143,7 +163,29 @@ export class FormatConverter {
 		return note_text
 	}
 
+	// TODO OSKAR [dodaje funkcję do usuwania ">" z notatek stworzonych z calloutów oraz BlockID] (✅)
+	removeGreaterThanFromLines(text: string): string {
+		// Text in einzelne Zeilen aufteilen
+		const lines: string[] = text.split("\n");
+
+		// Überprüfen, ob jede Zeile mit '>' beginnt
+		const allLinesStartWithGreaterThan: boolean = lines.every(line => line.startsWith(">"));
+
+		// Wenn alle Zeilen mit '>' beginnen, entferne das '>' von jeder Zeile
+		if (allLinesStartWithGreaterThan) {
+			var ret_val = lines.map(line => line.replace(/^> */, "")).join("\n");
+			ret_val = ret_val.replace(/^\^[a-z0-9]{6}/mg, "");
+			return ret_val
+		} else {
+			return text.replace(/^\^[a-z0-9]{6}/mg, "");  // Wenn nicht alle Zeilen mit '>' anfangen, keine Änderungen vornehmen und entfernt ^blockID.
+		}
+	}
+	// end
+
 	format(note_text: string, cloze: boolean, highlights_to_cloze: boolean): string {
+		// TODO OSKAR [wykonuję funkcję do usuwania ">" z notatek stworzonych z calloutów] (✅)
+		note_text = this.removeGreaterThanFromLines(note_text);
+		// end
 		note_text = this.obsidian_to_anki_math(note_text)
 		//Extract the parts that are anki math
 		let math_matches: string[]
@@ -165,7 +207,16 @@ export class FormatConverter {
 		note_text = note_text.replace(HIGHLIGHT_REGEXP, String.raw`<mark>$1</mark>`)
 		note_text = this.decensor(note_text, DISPLAY_CODE_REPLACE, display_code_matches, false)
 		note_text = this.decensor(note_text, INLINE_CODE_REPLACE, inline_code_matches, false)
+		// TODO OSKAR [usuwa formatowanie pytania] (✅)
+		// note_text = note_text.replace(/^(?:Back:|\-\->)$/mg, '');
+		note_text = note_text.replace(/^(?:[a-zA-Z]*:|\-\->)$/mg, '');
+		note_text = note_text.replace(/^——————————>$/mg, '');
+		note_text = note_text.replace(/^<——————————$/mg, '');
+		// end
 		note_text = converter.makeHtml(note_text)
+		// TODO OSKAR [wykonuję funkcję do usuwania "> " z tekstu na matematyce] (✅)
+		math_matches = this.removeRegexFromStrings(math_matches)
+		// end
 		note_text = this.decensor(note_text, MATH_REPLACE, math_matches, true).trim()
 		// Remove unnecessary paragraph tag
 		if (note_text.startsWith(PARA_OPEN) && note_text.endsWith(PARA_CLOSE)) {
@@ -176,8 +227,4 @@ export class FormatConverter {
 		}
 		return note_text
 	}
-
-
-
-
 }
