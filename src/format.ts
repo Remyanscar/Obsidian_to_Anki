@@ -74,12 +74,11 @@ export class FormatConverter {
 
     cloze_repl(_1: string, match_id: string, match_content: string): string {
         if (match_id == undefined) {
-            let result = "{{c" + cloze_unset_num.toString() + "::" + match_content + "}}"
+            const result = "{{c" + cloze_unset_num.toString() + "::" + match_content + "}}"
             cloze_unset_num += 1
             return result
         }
-        let result = "{{c" + match_id + "::" + match_content + "}}"
-        return result
+        return "{{c" + match_id + "::" + match_content + "}}"
     }
 
     curly_to_cloze(text: string): string {
@@ -148,7 +147,7 @@ export class FormatConverter {
         let inline_code_matches: string[]
         let display_code_matches: string[]
 
-        const add_highlight_css: boolean = note_text.match(c.OBS_DISPLAY_CODE_REGEXP) ? true : false;
+        const add_highlight_css: boolean = !!note_text.match(c.OBS_DISPLAY_CODE_REGEXP);
 
         [note_text, math_matches] = this.censor(note_text, ANKI_MATH_REGEXP, MATH_REPLACE);
         [note_text, display_code_matches] = this.censor(note_text, c.OBS_DISPLAY_CODE_REGEXP, DISPLAY_CODE_REPLACE);

@@ -19,12 +19,10 @@ export const CLOZE_ERROR: number = 42
 export const NOTE_TYPE_ERROR: number = 69
 
 function has_clozes(text: string): boolean {
-    /*Checks whether text actually has cloze deletions.*/
     return ANKI_CLOZE_REGEXP.test(text)
 }
 
 function note_has_clozes(note: AnkiConnectNote): boolean {
-    /*Checks whether a note has cloze deletions in any of its fields.*/
     for (let i in note.fields) {
         if (has_clozes(note.fields[i] || "")) {
             return true
@@ -33,7 +31,61 @@ function note_has_clozes(note: AnkiConnectNote): boolean {
     return false
 }
 
-abstract class AbstractNote {
+export function formatFields(fields: Record<string, string>, note_type: string, curly_cloze: boolean, highlights_to_cloze: boolean, formatter: FormatConverter): Record<string, string> {
+    for (let key in fields) {
+        fields[key] = formatter.format(
+            (fields[key] || "").trim(),
+            note_type.includes("Cloze") && curly_cloze, highlights_to_cloze
+        ).trim()
+    }
+    return fields
+}
+
+export function parseNoteBody(
+    note_type: string, identifier: number | null, tags: string[], fields: Record<string, string>,
+    deck: string, url: string, frozen_fields_dict: FROZEN_FIELDS_DICT, data: FileData, context: string,
+    formatter: FormatConverter
+): AnkiConnectNoteAndID {
+    let template = JSON.parse(JSON.stringify(data.template))
+    template["modelName"] = note_type
+    template["fields"] = fields
+
+    const file_link_fields = data.file_link_fields
+    if (url) {
+        formatter.format_note_with_url(template, url, file_link_fields[note_type] || "")
+    }
+
+    if (Object.keys(frozen_fields_dict).length) {
+        formatter.format_note_with_frozen_fields(template, frozen_fields_dict)
+    }
+
+    if (context) {
+        const context_field = data.context_fields[note_type]
+        if (context_field) {
+            template["fields"][context_field] += context
+        }
+    }
+
+    if (note_type.includes("Cloze") && !(note_has_clozes(template))) {
+        identifier = CLOZE_ERROR //An error code that says "don't add this note!"
+    }
+
+    if (data.add_obs_tags) {
+        for (let key in template["fields"]) {
+            for (let match of template["fields"][key].matchAll(OBS_TAG_REGEXP)) {
+                tags.push(match[1])
+                template["fields"][key] = template["fields"][key].replace(OBS_TAG_REGEXP, "")
+            }
+        }
+    }
+
+    template["tags"].push(...tags)
+    template["deckName"] = deck
+
+    return {note: template, identifier: identifier}
+}
+
+export abstract class AbstractNote {
     text: string
     split_text: string[]
     current_field_num: number
@@ -82,46 +134,12 @@ abstract class AbstractNote {
     abstract getFields(): Record<string, string>
 
     parse(deck: string, url: string, frozen_fields_dict: FROZEN_FIELDS_DICT, data: FileData, context: string): AnkiConnectNoteAndID {
-        let template = JSON.parse(JSON.stringify(data.template))
-        template["modelName"] = this.note_type
         if (this.no_note_type) {
+            let template = JSON.parse(JSON.stringify(data.template))
+            template["modelName"] = this.note_type
             return {note: template, identifier: NOTE_TYPE_ERROR}
         }
-        template["fields"] = this.getFields()
-
-        const file_link_fields = data.file_link_fields
-        if (url) {
-            this.formatter.format_note_with_url(template, url, file_link_fields[this.note_type] || "")
-        }
-
-        if (Object.keys(frozen_fields_dict).length) {
-            this.formatter.format_note_with_frozen_fields(template, frozen_fields_dict)
-        }
-
-        if (context) {
-            const context_field = data.context_fields[this.note_type]
-            if (context_field) {
-                template["fields"][context_field] += context
-            }
-        }
-
-        if (this.note_type.includes("Cloze") && !(note_has_clozes(template))) {
-            this.identifier = CLOZE_ERROR //An error code that says "don't add this note!"
-        }
-
-        if (data.add_obs_tags) {
-            for (let key in template["fields"]) {
-                for (let match of template["fields"][key].matchAll(OBS_TAG_REGEXP)) {
-                    this.tags.push(match[1])
-                    template["fields"][key] = template["fields"][key].replace(OBS_TAG_REGEXP, "")
-                }
-            }
-        }
-
-        template["tags"].push(...this.tags)
-        template["deckName"] = deck
-
-        return {note: template, identifier: this.identifier}
+        return parseNoteBody(this.note_type, this.identifier, this.tags, this.getFields(), deck, url, frozen_fields_dict, data, context, this.formatter)
     }
 }
 
@@ -151,8 +169,6 @@ export class Note extends AbstractNote {
     }
 
     fieldFromLine(line: string): [string, string] {
-        /*From a given line, determine the next field to add text into.
-        Then, return the stripped line, and the field.*/
         for (let field of this.field_names) {
             if (line.startsWith(field + ":")) {
                 return [line.slice((field + ":").length), field]
@@ -170,13 +186,7 @@ export class Note extends AbstractNote {
             [line, this.current_field] = this.fieldFromLine(line)
             fields[this.current_field] += line + "\n"
         }
-        for (let key in fields) {
-            fields[key] = this.formatter.format(
-                (fields[key] || "").trim(),
-                this.note_type.includes("Cloze") && this.curly_cloze, this.highlights_to_cloze
-            ).trim()
-        }
-        return fields
+        return formatFields(fields, this.note_type, this.curly_cloze, this.highlights_to_cloze, this.formatter)
     }
 }
 
@@ -229,20 +239,13 @@ export class InlineNote extends AbstractNote {
             }
             fields[this.current_field] += word + " "
         }
-        for (let key in fields) {
-            fields[key] = this.formatter.format(
-                (fields[key] || "").trim(),
-                this.note_type.includes("Cloze") && this.curly_cloze, this.highlights_to_cloze
-            ).trim()
-        }
-        return fields
+        return formatFields(fields, this.note_type, this.curly_cloze, this.highlights_to_cloze, this.formatter)
     }
 }
 
 export class RegexNote {
     match: RegExpMatchArray
     note_type: string
-    groups!: Array<string>
     identifier: number | null
     tags: string[]
     field_names: string[]
@@ -283,53 +286,10 @@ export class RegexNote {
                 fields[field] = sliced[idx] || "";
             }
         }
-
-        for (let key in fields) {
-            fields[key] = this.formatter.format(
-                (fields[key] || "").trim(),
-                this.note_type.includes("Cloze") && this.curly_cloze, this.highlights_to_cloze
-            ).trim()
-        }
-        return fields
+        return formatFields(fields, this.note_type, this.curly_cloze, this.highlights_to_cloze, this.formatter)
     }
 
     parse(deck: string, url: string = "", frozen_fields_dict: FROZEN_FIELDS_DICT, data: FileData, context: string): AnkiConnectNoteAndID {
-        let template = JSON.parse(JSON.stringify(data.template))
-        template["modelName"] = this.note_type
-        template["fields"] = this.getFields()
-
-        const file_link_fields = data.file_link_fields
-        if (url) {
-            this.formatter.format_note_with_url(template, url, file_link_fields[this.note_type] || "")
-        }
-
-        if (Object.keys(frozen_fields_dict).length) {
-            this.formatter.format_note_with_frozen_fields(template, frozen_fields_dict)
-        }
-
-        if (context) {
-            const context_field = data.context_fields[this.note_type]
-            if (context_field) {
-                template["fields"][context_field] += context
-            }
-        }
-
-        if (this.note_type.includes("Cloze") && !(note_has_clozes(template))) {
-            this.identifier = CLOZE_ERROR //An error code that says "don't add this note!"
-        }
-
-        if (data.add_obs_tags) {
-            for (let key in template["fields"]) {
-                for (let match of template["fields"][key].matchAll(OBS_TAG_REGEXP)) {
-                    this.tags.push(match[1])
-                    template["fields"][key] = template["fields"][key].replace(OBS_TAG_REGEXP, "")
-                }
-            }
-        }
-
-        template["tags"].push(...this.tags)
-        template["deckName"] = deck
-
-        return {note: template, identifier: this.identifier}
+        return parseNoteBody(this.note_type, this.identifier, this.tags, this.getFields(), deck, url, frozen_fields_dict, data, context, this.formatter)
     }
 }

@@ -1,10 +1,10 @@
 /*Class for managing a list of files, and their Anki requests.*/
 
-import {ParsedSettings, FileData} from './interfaces/settings-interface'
-import {App, TFile, TFolder, TAbstractFile, CachedMetadata, FileSystemAdapter, Notice} from 'obsidian'
-import {AllFile} from './file'
+import { ParsedSettings, FileData } from './interfaces/settings-interface'
+import { App, TFile, TFolder, TAbstractFile, CachedMetadata, FileSystemAdapter, Notice } from 'obsidian'
+import { AllFile } from './file'
 import * as AnkiConnect from './anki'
-import {basename} from 'path'
+import { basename } from 'path'
 import multimatch from "multimatch"
 
 interface addNoteResponse {
@@ -67,7 +67,7 @@ export class FileManager {
     requests_1_result: any
     added_media_set: Set<string>
 
-    constructor(app: App, data: ParsedSettings, files: TFile[], file_hashes: Record<string, string>, added_media: string[]) {
+    constructor(app: App, data:ParsedSettings, files: TFile[], file_hashes: Record<string, string>, added_media: string[]) {
         this.app = app
         this.data = data
         this.files = this.findFilesThatAreNotIgnored(files, data);
@@ -80,11 +80,9 @@ export class FileManager {
         return "obsidian://open?vault=" + encodeURIComponent(this.data.vault_name) + String.raw`&file=` + encodeURIComponent(file.path)
     }
 
-    findFilesThatAreNotIgnored(files: TFile[], data: ParsedSettings): TFile[] {
-        let ignoredFiles = []
-        ignoredFiles = multimatch(files.map(file => file.path), data.ignored_file_globs)
-        let notIgnoredFiles = files.filter(file => !ignoredFiles.includes(file.path))
-        return notIgnoredFiles;
+    findFilesThatAreNotIgnored(files:TFile[], data:ParsedSettings):TFile[]{
+        const ignoredFiles = multimatch(files.map(file => file.path), data.ignored_file_globs)
+        return files.filter(file => !ignoredFiles.includes(file.path));
     }
 
     getFolderPathList(file: TFile): TFolder[] {
@@ -98,7 +96,7 @@ export class FileManager {
         return result
     }
 
-    getDefaultDeck(file: TFile, folder_path_list: TFolder[]): string {
+    getDefaultDeck(_file: TFile, folder_path_list: TFolder[]): string {
         let folder_decks = this.data.folder_decks
         for (let folder of folder_path_list) {
             // Loops over them from innermost folder
@@ -110,7 +108,7 @@ export class FileManager {
         return this.data.template.deckName
     }
 
-    getDefaultTags(file: TFile, folder_path_list: TFolder[]): string[] {
+    getDefaultTags(_file: TFile, folder_path_list: TFolder[]): string[] {
         let folder_tags = this.data.folder_tags
         let tags_list: string[] = []
         for (let folder of folder_path_list) {
@@ -228,7 +226,8 @@ export class FileManager {
                 const dataFile = this.app.metadataCache.getFirstLinkpathDest(mediaLink, file.path)
                 if (!(dataFile)) {
                     console.warn("Couldn't locate media file ", mediaLink)
-                } else {
+                }
+                else {
                     // Located successfully, so treat as if we've added the media
                     this.added_media_set.add(mediaLink)
                     const realPath = (this.app.vault.adapter as FileSystemAdapter).getFullPath(dataFile.path)
@@ -242,7 +241,6 @@ export class FileManager {
             }
         }
         requests.push(AnkiConnect.multi(temp))
-        temp = []
 
         this.requests_1_result = ((await AnkiConnect.invoke('multi', {actions: requests}) as Array<Object>).slice(1) as any)
         await this.parse_requests_1()
@@ -257,7 +255,7 @@ export class FileManager {
         let note_ids_array_by_file: Requests1Result[0]["result"]
         try {
             note_ids_array_by_file = AnkiConnect.parse(response[0])
-        } catch (error) {
+        } catch(error) {
             console.error("Error: ", error)
             note_ids_array_by_file = response[0].result
         }
@@ -271,7 +269,7 @@ export class FileManager {
             let file_response: addNoteResponse[]
             try {
                 file_response = AnkiConnect.parse(note_ids_array_by_file[i]!)
-            } catch (error) {
+            } catch(error) {
                 console.error("Error: ", error)
                 file_response = note_ids_array_by_file[i]!.result
             }
@@ -337,7 +335,7 @@ export class FileManager {
         console.info("Requesting tags to be replaced...")
         for (let file of this.ownFiles) {
             let rem = file.getClearTags()
-            if (rem.params.notes.length) {
+            if(rem.params.notes.length) {
                 temp.push(rem)
             }
         }
@@ -348,7 +346,6 @@ export class FileManager {
             temp.push(file.getAddTags())
         }
         requests.push(AnkiConnect.multi(temp))
-        temp = []
 
         await AnkiConnect.invoke('multi', {actions: requests})
         console.info("All done!")

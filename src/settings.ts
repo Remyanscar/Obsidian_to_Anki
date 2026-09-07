@@ -1,4 +1,4 @@
-import {PluginSettingTab, Setting, Notice, TFolder} from 'obsidian'
+import { PluginSettingTab, Setting, Notice, TFolder } from 'obsidian'
 import * as AnkiConnect from './anki'
 
 const defaultDescs = {
@@ -28,7 +28,7 @@ export class SettingsTab extends PluginSettingTab {
                     regexp_section.hasOwnProperty(note_type) ? regexp_section[note_type] : ""
                 ).onChange((value) => {
                     plugin.settings["CUSTOM_REGEXPS"][note_type] = value
-                    plugin.saveAllData()
+                    plugin.saveAllData().catch(console.error)
                 })
             )
         custom_regexp.settingEl = row_cells[1] as HTMLElement
@@ -41,30 +41,32 @@ export class SettingsTab extends PluginSettingTab {
         let link_fields_section = plugin.settings.FILE_LINK_FIELDS
         let link_field = new Setting(row_cells[2] as HTMLElement)
             .addDropdown(
-                async dropdown => {
-                    if (!(plugin.fields_dict[note_type])) {
-                        plugin.fields_dict = await plugin.loadFieldsDict()
-                        if (Object.keys(plugin.fields_dict).length != plugin.note_types.length) {
-                            new Notice('Need to connect to Anki to generate fields dictionary...')
-                            try {
-                                plugin.fields_dict = await plugin.generateFieldsDict()
-                                new Notice("Fields dictionary successfully generated!")
-                            } catch (e) {
-                                new Notice("Couldn't connect to Anki! Check console for error message.")
-                                return
+                dropdown => {
+                    (async () => {
+                        if (!(plugin.fields_dict[note_type])) {
+                            plugin.fields_dict = await plugin.loadFieldsDict()
+                            if (Object.keys(plugin.fields_dict).length != plugin.note_types.length) {
+                                new Notice('Need to connect to Anki to generate fields dictionary...')
+                                try {
+                                    plugin.fields_dict = await plugin.generateFieldsDict()
+                                    new Notice("Fields dictionary successfully generated!")
+                                } catch(e) {
+                                    new Notice("Couldn't connect to Anki! Check console for error message.")
+                                    return
+                                }
                             }
                         }
-                    }
-                    const field_names = plugin.fields_dict[note_type]
-                    for (let field of field_names) {
-                        dropdown.addOption(field, field)
-                    }
-                    dropdown.setValue(
-                        link_fields_section.hasOwnProperty(note_type) ? link_fields_section[note_type] : field_names[0]
-                    ).onChange((value) => {
-                        plugin.settings.FILE_LINK_FIELDS[note_type] = value
-                        plugin.saveAllData()
-                    })
+                        const field_names = plugin.fields_dict[note_type] || []
+                        for (let field of field_names) {
+                            dropdown.addOption(field, field)
+                        }
+                        dropdown.setValue(
+                            link_fields_section.hasOwnProperty(note_type) ? link_fields_section[note_type] : field_names[0]
+                        ).onChange((value) => {
+                            plugin.settings.FILE_LINK_FIELDS[note_type] = value
+                            plugin.saveAllData().catch(console.error)
+                        })
+                    })().catch(console.error)
                 }
             )
         link_field.settingEl = row_cells[2] as HTMLElement
@@ -77,17 +79,19 @@ export class SettingsTab extends PluginSettingTab {
         let context_fields_section: Record<string, string> = plugin.settings.CONTEXT_FIELDS
         let context_field = new Setting(row_cells[3] as HTMLElement)
             .addDropdown(
-                async dropdown => {
-                    const field_names = plugin.fields_dict[note_type]
-                    for (let field of field_names) {
-                        dropdown.addOption(field, field)
-                    }
-                    dropdown.setValue(
-                        context_fields_section.hasOwnProperty(note_type) ? context_fields_section[note_type] : field_names[0]
-                    ).onChange((value) => {
-                        plugin.settings.CONTEXT_FIELDS[note_type] = value
-                        plugin.saveAllData()
-                    })
+                dropdown => {
+                    (async () => {
+                        const field_names = plugin.fields_dict[note_type] || []
+                        for (let field of field_names) {
+                            dropdown.addOption(field, field)
+                        }
+                        dropdown.setValue(
+                            context_fields_section.hasOwnProperty(note_type) ? context_fields_section[note_type] : field_names[0]
+                        ).onChange((value) => {
+                            plugin.settings.CONTEXT_FIELDS[note_type] = value
+                            plugin.saveAllData().catch(console.error)
+                        })
+                    })().catch(console.error)
                 }
             )
         context_field.settingEl = row_cells[3] as HTMLElement
@@ -152,16 +156,16 @@ export class SettingsTab extends PluginSettingTab {
     setup_syntax() {
         let {containerEl} = this;
         const plugin = (this as any).plugin
-        let syntax_settings = containerEl.createEl('h3', {text: 'Syntax Settings'})
+        containerEl.createEl('h3', {text: 'Syntax Settings'})
         for (let key of Object.keys(plugin.settings["Syntax"])) {
-            new Setting(syntax_settings)
+            void new Setting(containerEl)
                 .setName(key)
                 .addText(
                     text => text.setValue(plugin.settings["Syntax"][key])
-                        .onChange((value) => {
-                            plugin.settings["Syntax"][key] = value
-                            plugin.saveAllData()
-                        })
+                    .onChange((value) => {
+                        plugin.settings["Syntax"][key] = value
+                        plugin.saveAllData().catch(console.error)
+                    })
                 )
         }
     }
@@ -169,78 +173,58 @@ export class SettingsTab extends PluginSettingTab {
     setup_defaults() {
         let {containerEl} = this;
         const plugin = (this as any).plugin
-        let defaults_settings = containerEl.createEl('h3', {text: 'Defaults'})
+        containerEl.createEl('h3', {text: 'Defaults'})
 
-        // To account for new scan directory
         if (!(plugin.settings["Defaults"].hasOwnProperty("Scan Directory"))) {
             plugin.settings["Defaults"]["Scan Directory"] = ""
         }
-        // To account for new add context
         if (!(plugin.settings["Defaults"].hasOwnProperty("Add Context"))) {
             plugin.settings["Defaults"]["Add Context"] = false
         }
-        // To account for new scheduling interval
         if (!(plugin.settings["Defaults"].hasOwnProperty("Scheduling Interval"))) {
             plugin.settings["Defaults"]["Scheduling Interval"] = 0
         }
-        // To account for new highlights to clozes
         if (!(plugin.settings["Defaults"].hasOwnProperty("CurlyCloze - Highlights to Clozes"))) {
             plugin.settings["Defaults"]["CurlyCloze - Highlights to Clozes"] = false
         }
-        // To account for new add obsidian tags
         if (!(plugin.settings["Defaults"].hasOwnProperty("Add Obsidian Tags"))) {
             plugin.settings["Defaults"]["Add Obsidian Tags"] = false
         }
 
         for (let key of Object.keys(plugin.settings["Defaults"])) {
-            // To account for removal of regex setting
-            if (key === "Regex") {
-                continue
-            }
-            if (typeof plugin.settings["Defaults"][key] === "string") {
-                new Setting(defaults_settings)
-                    .setName(key)
-                    .setDesc(defaultDescs[key as keyof typeof defaultDescs])
-                    .addText(
-                        text => text.setValue(plugin.settings["Defaults"][key])
-                            .onChange((value) => {
-                                plugin.settings["Defaults"][key] = value
-                                plugin.saveAllData()
-                            })
-                    )
-            } else if (typeof plugin.settings["Defaults"][key] === "boolean") {
-                new Setting(defaults_settings)
-                    .setName(key)
-                    .setDesc(defaultDescs[key as keyof typeof defaultDescs])
-                    .addToggle(
-                        toggle => toggle.setValue(plugin.settings["Defaults"][key])
-                            .onChange((value) => {
-                                plugin.settings["Defaults"][key] = value
-                                plugin.saveAllData()
-                            })
-                    )
+            if (key === "Regex") { continue }
+
+            const desc = defaultDescs[key as keyof typeof defaultDescs]
+            const val = plugin.settings["Defaults"][key]
+            const setting = new Setting(containerEl).setName(key).setDesc(desc)
+
+            if (typeof val === "string") {
+                setting.addText(text => text.setValue(val).onChange((value) => {
+                    plugin.settings["Defaults"][key] = value
+                    plugin.saveAllData().catch(console.error)
+                }))
+            } else if (typeof val === "boolean") {
+                setting.addToggle(toggle => toggle.setValue(val).onChange((value) => {
+                    plugin.settings["Defaults"][key] = value
+                    plugin.saveAllData().catch(console.error)
+                }))
             } else {
-                new Setting(defaults_settings)
-                    .setName(key)
-                    .setDesc(defaultDescs[key as keyof typeof defaultDescs])
-                    .addSlider(
-                        slider => {
-                            slider.setValue(plugin.settings["Defaults"][key])
-                                .setLimits(0, 360, 5)
-                                .setDynamicTooltip()
-                                .onChange(async (value) => {
-                                    plugin.settings["Defaults"][key] = value
-                                    await plugin.saveAllData()
-                                    if (plugin.hasOwnProperty("schedule_id")) {
-                                        window.clearInterval(plugin.schedule_id)
-                                    }
-                                    if (value != 0) {
-                                        plugin.schedule_id = window.setInterval(async () => await plugin.scanVault(), value * 1000 * 60)
-                                        plugin.registerInterval(plugin.schedule_id)
-                                    }
-                                })
-                        }
-                    )
+                setting.addSlider(slider => {
+                    slider.setValue(val).setLimits(0, 360, 5).onChange((value) => {
+                        plugin.settings["Defaults"][key] = value
+                        plugin.saveAllData().then(() => {
+                            if (plugin.hasOwnProperty("schedule_id")) {
+                                window.clearInterval(plugin.schedule_id)
+                            }
+                            if (value != 0) {
+                                plugin.schedule_id = window.setInterval(() => {
+                                    plugin.scanVault().catch(console.error)
+                                }, value * 1000 * 60)
+                                plugin.registerInterval(plugin.schedule_id)
+                            }
+                        }).catch(console.error)
+                    })
+                })
             }
         }
     }
@@ -252,45 +236,26 @@ export class SettingsTab extends PluginSettingTab {
             let filtered_list: TFolder[] = folder.children.filter((element: any) => element.hasOwnProperty("children")) as TFolder[]
             folder_list.push(...filtered_list)
         }
-        return folder_list.slice(1) //Removes initial vault folder
+        return folder_list.slice(1)
     }
 
-    setup_folder_deck(folder: TFolder, row_cells: HTMLCollection) {
+    setup_folder_field(folder: TFolder, row_cells: HTMLCollection, cell_index: number, setting_key: "FOLDER_DECKS" | "FOLDER_TAGS") {
         const plugin = (this as any).plugin
-        let folder_decks = plugin.settings.FOLDER_DECKS
-        if (!(folder_decks.hasOwnProperty(folder.path))) {
-            folder_decks[folder.path] = ""
+        let folder_dict = plugin.settings[setting_key]
+        if (!(folder_dict.hasOwnProperty(folder.path))) {
+            folder_dict[folder.path] = ""
         }
-        let folder_deck = new Setting(row_cells[1] as HTMLElement)
+        let folder_field = new Setting(row_cells[cell_index] as HTMLElement)
             .addText(
-                text => text.setValue(folder_decks[folder.path])
-                    .onChange((value) => {
-                        plugin.settings.FOLDER_DECKS[folder.path] = value
-                        plugin.saveAllData()
-                    })
+                text => text.setValue(folder_dict[folder.path])
+                .onChange((value) => {
+                    plugin.settings[setting_key][folder.path] = value
+                    plugin.saveAllData().catch(console.error)
+                })
             )
-        folder_deck.settingEl = row_cells[1] as HTMLElement
-        folder_deck.infoEl.remove()
-        folder_deck.controlEl.className += " anki-center"
-    }
-
-    setup_folder_tag(folder: TFolder, row_cells: HTMLCollection) {
-        const plugin = (this as any).plugin
-        let folder_tags = plugin.settings.FOLDER_TAGS
-        if (!(folder_tags.hasOwnProperty(folder.path))) {
-            folder_tags[folder.path] = ""
-        }
-        let folder_tag = new Setting(row_cells[2] as HTMLElement)
-            .addText(
-                text => text.setValue(folder_tags[folder.path])
-                    .onChange((value) => {
-                        plugin.settings.FOLDER_TAGS[folder.path] = value
-                        plugin.saveAllData()
-                    })
-            )
-        folder_tag.settingEl = row_cells[2] as HTMLElement
-        folder_tag.infoEl.remove()
-        folder_tag.controlEl.className += " anki-center"
+        folder_field.settingEl = row_cells[cell_index] as HTMLElement
+        folder_field.infoEl.remove()
+        folder_field.controlEl.className += " anki-center"
     }
 
     setup_folder_table() {
@@ -326,90 +291,95 @@ export class SettingsTab extends PluginSettingTab {
 
             let row_cells = row.children
             row_cells[0]!.innerHTML = folder.path
-            this.setup_folder_deck(folder, row_cells)
-            this.setup_folder_tag(folder, row_cells)
+
+            this.setup_folder_field(folder, row_cells, 1, "FOLDER_DECKS")
+            this.setup_folder_field(folder, row_cells, 2, "FOLDER_TAGS")
         }
 
+    }
+
+    setup_clear_cache_button(name: string, desc: string, clear_action: () => void, success_msg: string) {
+        const plugin = (this as any).plugin;
+        void new Setting(this.containerEl)
+            .setName(name)
+            .setDesc(desc)
+            .addButton(button => {
+                button.setButtonText("Clear").setCta()
+                .onClick(() => {
+                    clear_action();
+                    plugin.saveAllData().then(() => {
+                        new Notice(success_msg);
+                    }).catch(console.error);
+                });
+            });
     }
 
     setup_buttons() {
         let {containerEl} = this
         const plugin = (this as any).plugin
-        let action_buttons = containerEl.createEl('h3', {text: 'Actions'})
-        new Setting(action_buttons)
+        containerEl.createEl('h3', {text: 'Actions'})
+
+        void new Setting(containerEl)
             .setName("Regenerate Note Type Table")
             .setDesc("Connect to Anki to regenerate the table with new note types, or get rid of deleted note types.")
             .addButton(
                 button => {
-                    button.setButtonText("Regenerate").setClass("mod-cta")
-                        .onClick(async () => {
-                            new Notice("Need to connect to Anki to update note types...")
-                            try {
-                                plugin.note_types = await AnkiConnect.invoke('modelNames')
-                                plugin.regenerateSettingsRegexps()
-                                plugin.fields_dict = await plugin.loadFieldsDict()
-                                if (Object.keys(plugin.fields_dict).length != plugin.note_types.length) {
-                                    new Notice('Need to connect to Anki to generate fields dictionary...')
-                                    try {
-                                        plugin.fields_dict = await plugin.generateFieldsDict()
-                                        new Notice("Fields dictionary successfully generated!")
-                                    } catch (e) {
-                                        new Notice("Couldn't connect to Anki! Check console for error message.")
-                                        return
-                                    }
-                                }
-                                await plugin.saveAllData()
-                                this.setup_display()
-                                new Notice("Note types updated!")
-                            } catch (e) {
-                                new Notice("Couldn't connect to Anki! Check console for details.")
+                    button.setButtonText("Regenerate").setCta()
+                    .onClick(() => {
+                        new Notice("Need to connect to Anki to update note types...")
+                        AnkiConnect.invoke('modelNames').then((names) => {
+                            plugin.note_types = names as string[]
+                            plugin.regenerateSettingsRegexps()
+                            return plugin.loadFieldsDict()
+                        }).then((dict) => {
+                            plugin.fields_dict = dict
+                            if (Object.keys(plugin.fields_dict).length != plugin.note_types.length) {
+                                new Notice('Need to connect to Anki to generate fields dictionary...')
+                                return plugin.generateFieldsDict().then((new_dict: Record<string, string[]>) => {
+                                    plugin.fields_dict = new_dict
+                                    new Notice("Fields dictionary successfully generated!")
+                                })
                             }
+                        }).then(() => {
+                            return plugin.saveAllData()
+                        }).then(() => {
+                            this.setup_display()
+                            new Notice("Note types updated!")
+                        }).catch((e) => {
+                            console.error(e)
+                            new Notice("Couldn't connect to Anki! Check console for details.")
                         })
+                    })
                 }
             )
-        new Setting(action_buttons)
-            .setName("Clear Media Cache")
-            .setDesc(`Clear the cached list of media filenames that have been added to Anki. The plugin will skip over adding a media file if it's added a file with the same name before, so clear this if e.g. you've updated the media file with the same name.`)
-            .addButton(
-                button => {
-                    button.setButtonText("Clear").setClass("mod-cta")
-                        .onClick(async () => {
-                            plugin.added_media = []
-                            await plugin.saveAllData()
-                            new Notice("Media Cache cleared successfully!")
-                        })
-                }
-            )
-        new Setting(action_buttons)
-            .setName("Clear File Hash Cache")
-            .setDesc(`Clear the cached dictionary of file hashes that the plugin has scanned before. The plugin will skip over a file if the file path and the hash is unaltered.`)
-            .addButton(
-                button => {
-                    button.setButtonText("Clear").setClass("mod-cta")
-                        .onClick(async () => {
-                            plugin.file_hashes = {}
-                            await plugin.saveAllData()
-                            new Notice("File Hash Cache cleared successfully!")
-                        })
-                }
-            )
+
+        this.setup_clear_cache_button(
+            "Clear Media Cache",
+            "Clear the cached list of media filenames that have been added to Anki. The plugin will skip over adding a media file if it's added a file with the same name before, so clear this if e.g. you've updated the media file with the same name.",
+            () => { plugin.added_media = [] },
+            "Media Cache cleared successfully!"
+        );
+
+        this.setup_clear_cache_button(
+            "Clear File Hash Cache",
+            "Clear the cached dictionary of file hashes that the plugin has scanned before. The plugin will skip over a file if the file path and the hash is unaltered.",
+            () => { plugin.file_hashes = {} },
+            "File Hash Cache cleared successfully!"
+        );
     }
 
     setup_ignore_files() {
-        let {containerEl} = this;
+        let { containerEl } = this;
         const plugin = (this as any).plugin
-        let ignored_files_settings = containerEl.createEl('h3', {text: 'Ignored File Settings'})
+        containerEl.createEl('h3', { text: 'Ignored File Settings' })
         plugin.settings["IGNORED_FILE_GLOBS"] = plugin.settings.hasOwnProperty("IGNORED_FILE_GLOBS") ? plugin.settings["IGNORED_FILE_GLOBS"] : DEFAULT_IGNORED_FILE_GLOBS
 
         const descriptionFragment = document.createDocumentFragment();
-        descriptionFragment.createEl("span", {text: "Glob patterns for files to ignore. You can add multiple patterns. One per line. Have a look at the "})
-        descriptionFragment.createEl("a", {
-            text: "README.md",
-            href: "https://github.com/Pseudonium/Obsidian_to_Anki?tab=readme-ov-file#features"
-        });
-        descriptionFragment.createEl("span", {text: " for more information, examples and further resources."})
+        descriptionFragment.createEl("span", { text: "Glob patterns for files to ignore. You can add multiple patterns. One per line. Have a look at the " })
+        descriptionFragment.createEl("a", { text: "README.md", href: "https://github.com/Pseudonium/Obsidian_to_Anki?tab=readme-ov-file#features" });
+        descriptionFragment.createEl("span", { text: " for more information, examples and further resources." })
 
-        new Setting(ignored_files_settings)
+        void new Setting(containerEl)
             .setName("Patterns to ignore")
             .setDesc(descriptionFragment)
             .addTextArea(text => {
@@ -417,9 +387,9 @@ export class SettingsTab extends PluginSettingTab {
                     .setPlaceholder("Examples: '**/*.excalidraw.md', 'Templates/**'")
                     .onChange((value) => {
                         let ignoreLines = value.split("\n")
-                        ignoreLines = ignoreLines.filter(e => e.trim() != "") //filter out empty lines and blank lines
+                        ignoreLines = ignoreLines.filter((e: string) => e.trim() != "") //filter out empty lines and blank lines
                         plugin.settings.IGNORED_FILE_GLOBS = ignoreLines
-                        plugin.saveAllData()
+                        plugin.saveAllData().catch(console.error)
                     })
                 text.inputEl.rows = 10
                 text.inputEl.cols = 30
@@ -430,10 +400,7 @@ export class SettingsTab extends PluginSettingTab {
         let {containerEl} = this
         containerEl.empty()
         containerEl.createEl('h2', {text: 'Obsidian_to_Anki settings'})
-        containerEl.createEl('a', {
-            text: 'For more information check the wiki',
-            href: "https://github.com/Pseudonium/Obsidian_to_Anki/wiki"
-        })
+        containerEl.createEl('a', {text: 'For more information check the wiki', href: "https://github.com/Pseudonium/Obsidian_to_Anki/wiki"})
 
         this.setup_note_table()
         this.setup_folder_table()
@@ -443,7 +410,7 @@ export class SettingsTab extends PluginSettingTab {
         this.setup_ignore_files()
     }
 
-    async display() {
+    display() {
         this.setup_display()
     }
 }

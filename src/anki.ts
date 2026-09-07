@@ -1,5 +1,5 @@
 const ANKI_PORT: number = 8765
-import {AnkiConnectNote} from './interfaces/note-interface'
+import { AnkiConnectNote } from './interfaces/note-interface'
 
 export interface AnkiConnectRequest {
     action: string,
@@ -7,29 +7,35 @@ export interface AnkiConnectRequest {
     params: any
 }
 
-export function invoke(action: string, params = {}) {
+export function invoke(action: string, params={}) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest()
         xhr.addEventListener('error', () => reject('failed to issue request'));
         xhr.addEventListener('load', () => {
+            let response: any;
             try {
-                const response = JSON.parse(xhr.responseText);
-                if (Object.getOwnPropertyNames(response).length != 2) {
-                    throw 'response has an unexpected number of fields';
-                }
-                if (!response.hasOwnProperty('error')) {
-                    throw 'response is missing required error field';
-                }
-                if (!response.hasOwnProperty('result')) {
-                    throw 'response is missing required result field';
-                }
-                if (response.error) {
-                    throw response.error;
-                }
-                resolve(response.result);
+                response = JSON.parse(xhr.responseText);
             } catch (e) {
                 reject(e);
+                return;
             }
+            if (Object.getOwnPropertyNames(response).length != 2) {
+                reject('response has an unexpected number of fields');
+                return;
+            }
+            if (!response.hasOwnProperty('error')) {
+                reject('response is missing required error field');
+                return;
+            }
+            if (!response.hasOwnProperty('result')) {
+                reject('response is missing required result field');
+                return;
+            }
+            if (response.error) {
+                reject(response.error);
+                return;
+            }
+            resolve(response.result);
         });
 
         xhr.open('POST', 'http://127.0.0.1:' + ANKI_PORT.toString());
@@ -37,8 +43,7 @@ export function invoke(action: string, params = {}) {
     });
 }
 
-export function parse<T>(response: { error: string | null, result: T }): T {
-    //Helper function for parsing the result of a multi
+export function parse<T>(response: {error: string | null, result: T}): T {
     if (Object.getOwnPropertyNames(response).length != 2) {
         throw 'response has an unexpected number of fields'
     }
@@ -54,9 +59,8 @@ export function parse<T>(response: { error: string | null, result: T }): T {
     return response.result as T
 }
 
-// All the rest of these functions only return request objects as opposed to actually carrying out the action. For efficiency!
-function request(action: string, params = {}): AnkiConnectRequest {
-    return {action, version: 6, params}
+function request(action: string, params={}): AnkiConnectRequest {
+    return {action, version:6, params}
 }
 
 export function multi(actions: AnkiConnectRequest[]): AnkiConnectRequest {

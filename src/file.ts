@@ -1,18 +1,18 @@
-/*Performing plugin operations on markdown file contents*/
+/*Performing plugin operations on Markdown file contents*/
 
-import {FROZEN_FIELDS_DICT} from './interfaces/field-interface'
-import {AnkiConnectNote, AnkiConnectNoteAndID} from './interfaces/note-interface'
-import {FileData} from './interfaces/settings-interface'
-import {Note, InlineNote, RegexNote, CLOZE_ERROR, NOTE_TYPE_ERROR, TAG_SEP, ID_REGEXP_STR, TAG_REGEXP_STR} from './note'
-import {Md5} from 'ts-md5';
+import { FROZEN_FIELDS_DICT } from './interfaces/field-interface'
+import { AnkiConnectNote, AnkiConnectNoteAndID } from './interfaces/note-interface'
+import { FileData } from './interfaces/settings-interface'
+import { AbstractNote, Note, InlineNote, RegexNote, CLOZE_ERROR, NOTE_TYPE_ERROR, TAG_SEP, ID_REGEXP_STR, TAG_REGEXP_STR } from './note'
+import { Md5 } from 'ts-md5';
 import * as AnkiConnect from './anki'
 import * as c from './constants'
-import {FormatConverter} from './format'
-import {CachedMetadata, HeadingCache} from 'obsidian'
+import { FormatConverter } from './format'
+import { CachedMetadata, HeadingCache } from 'obsidian'
 
 const double_regexp: RegExp = /(?:\r\n|\r|\n)((?:\r\n|\r|\n)(?:<!--)?ID: \d+)/g
 
-function id_to_str(identifier: number, inline: boolean = false, comment: boolean = false): string {
+function id_to_str(identifier:number, inline:boolean = false, comment:boolean = false): string {
     let result = "ID: " + identifier.toString()
     if (comment) {
         result = "<!--" + result + "-->"
@@ -26,11 +26,8 @@ function id_to_str(identifier: number, inline: boolean = false, comment: boolean
 }
 
 function string_insert(text: string, position_inserts: Array<[number, string]>): string {
-    /*Insert strings in position_inserts into text, at indices.
-    position_inserts will look like:
-    [(0, "hi"), (3, "hello"), (5, "beep")]*/
     let offset = 0
-    let sorted_inserts: Array<[number, string]> = position_inserts.sort((a, b): number => a[0] - b[0])
+    let sorted_inserts: Array<[number, string]> = position_inserts.sort((a, b):number => a[0] - b[0])
     for (let insertion of sorted_inserts) {
         let position = insertion[0]
         let insert_str = insertion[1]
@@ -41,7 +38,6 @@ function string_insert(text: string, position_inserts: Array<[number, string]>):
 }
 
 function spans(pattern: RegExp, text: string): Array<[number, number]> {
-    /*Return a list of span-tuples for matches of pattern in text.*/
     let output: Array<[number, number]> = []
     let matches = text.matchAll(pattern)
     for (let match of matches) {
@@ -53,7 +49,6 @@ function spans(pattern: RegExp, text: string): Array<[number, number]> {
 }
 
 function contained_in(span: [number, number], spans: Array<[number, number]>): boolean {
-    /*Return whether span is contained in spans (+- 1 leeway)*/
     return spans.some(
         (element) => span[0] >= element[0] - 1 && span[1] <= element[1] + 1
     )
@@ -66,6 +61,15 @@ function* findignore(pattern: RegExp, text: string, ignore_spans: Array<[number,
             yield match
         }
     }
+}
+
+function buildIDInserts(indexes: number[], ids: Array<number | null>, offset: number, inline: boolean, comment: boolean, prefix: string = ""): [number, string][] {
+    let inserts: [number, string][] = []
+    indexes.forEach((id_pos, idx) => {
+        const identifier = ids[idx + offset] ?? null;
+        if (identifier) inserts.push([id_pos, prefix + id_to_str(identifier, inline, comment)])
+    })
+    return inserts
 }
 
 export abstract class AbstractFile {
@@ -90,7 +94,7 @@ export abstract class AbstractFile {
 
     formatter: FormatConverter
 
-    constructor(file_contents: string, path: string, url: string, data: FileData, file_cache: CachedMetadata) {
+    protected constructor(file_contents: string, path:string, url: string, data: FileData, file_cache: CachedMetadata) {
         this.data = data
         this.file = file_contents
         this.path = path
@@ -114,14 +118,13 @@ export abstract class AbstractFile {
         for (let match of this.file.matchAll(this.data.FROZEN_REGEXP)) {
             const [note_type, fields]: [string, string] = [match[1] || "", match[2] || ""]
             const virtual_note = note_type + "\n" + fields
-            const parsed_fields: Record<string, string> = new Note(
+            frozen_fields_dict[note_type] = new Note(
                 virtual_note,
                 this.data.fields_dict,
                 this.data.curly_cloze,
                 this.data.highlights_to_cloze,
                 this.formatter
             ).getFields()
-            frozen_fields_dict[note_type] = parsed_fields
         }
 
         this.frozen_fields_dict = frozen_fields_dict
@@ -158,16 +161,14 @@ export abstract class AbstractFile {
 
         for (let currentHeading of this.file_cache.headings) {
             if (position < currentHeading.position.start.offset) {
-                //We've gone past position now with headings, so let's return!
                 break
             }
             let insert_index: number = 0
             for (let contextHeading of currentContext) {
-                if (currentHeading.level > contextHeading.level) {
-                    insert_index += 1
-                    continue
+                if (currentHeading.level <= contextHeading.level) {
+                    break
                 }
-                break
+                insert_index += 1
             }
             currentContext = currentContext.slice(0, insert_index)
             currentContext.push(currentHeading)
@@ -259,7 +260,7 @@ export class AllFile extends AbstractFile {
     regex_notes_to_add!: AnkiConnectNote[]
     regex_id_indexes!: number[]
 
-    constructor(file_contents: string, path: string, url: string, data: FileData, file_cache: CachedMetadata) {
+    constructor(file_contents: string, path:string, url: string, data: FileData, file_cache: CachedMetadata) {
         super(file_contents, path, url, data, file_cache)
         this.custom_regexps = data.custom_regexps
     }
@@ -305,35 +306,23 @@ export class AllFile extends AbstractFile {
         this.notes_to_delete = []
     }
 
-    scanNotes() {
-        for (let note_match of this.file.matchAll(this.data.NOTE_REGEXP)) {
+    scanNotesHelper(regexp: RegExp, NoteClass: new (...args: any[]) => AbstractNote, notes_arr: AnkiConnectNote[], id_arr: number[]) {
+        for (let note_match of this.file.matchAll(regexp)) {
             let [note, position]: [string, number] = [note_match[1] || "", note_match.index! + note_match[0]!.indexOf(note_match[1]!) + note_match[1]!.length]
-            // That second thing essentially gets the index of the end of the first capture group.
-            let parsed = new Note(
-                note,
-                this.data.fields_dict,
-                this.data.curly_cloze,
-                this.data.highlights_to_cloze,
-                this.formatter
+            let parsed = new NoteClass(
+                note, this.data.fields_dict, this.data.curly_cloze, this.data.highlights_to_cloze, this.formatter
             ).parse(
-                this.target_deck,
-                this.url,
-                this.frozen_fields_dict,
-                this.data,
-                this.data.add_context ? this.getContextAtIndex(note_match.index!) : ""
+                this.target_deck, this.url, this.frozen_fields_dict, this.data, this.data.add_context ? this.getContextAtIndex(note_match.index!) : ""
             )
 
             if (parsed.identifier == null) {
-                // Need to make sure global_tags get added
                 parsed.note.tags.push(...this.global_tags.split(TAG_SEP))
-                this.notes_to_add.push(parsed.note)
-                this.id_indexes.push(position)
+                notes_arr.push(parsed.note)
+                id_arr.push(position)
             } else if (!this.data.EXISTING_IDS.includes(parsed.identifier!)) {
                 if (parsed.identifier == CLOZE_ERROR) {
                     continue
-                }
-                // Need to show an error otherwise
-                else if (parsed.identifier == NOTE_TYPE_ERROR) {
+                } else if (parsed.identifier == NOTE_TYPE_ERROR) {
                     console.warn("Did not recognise note type ", parsed.note.modelName, " in file ", this.path)
                 } else {
                     console.warn("Note with id", parsed.identifier, " in file ", this.path, " does not exist in Anki!")
@@ -344,45 +333,15 @@ export class AllFile extends AbstractFile {
         }
     }
 
-    scanInlineNotes() {
-        for (let note_match of this.file.matchAll(this.data.INLINE_REGEXP)) {
-            let [note, position]: [string, number] = [note_match[1] || "", note_match.index! + note_match[0]!.indexOf(note_match[1]!) + note_match[1]!.length]
-            // That second thing essentially gets the index of the end of the first capture group.
-            let parsed = new InlineNote(
-                note,
-                this.data.fields_dict,
-                this.data.curly_cloze,
-                this.data.highlights_to_cloze,
-                this.formatter
-            ).parse(
-                this.target_deck,
-                this.url,
-                this.frozen_fields_dict,
-                this.data,
-                this.data.add_context ? this.getContextAtIndex(note_match.index!) : ""
-            )
+    scanNotes() {
+        this.scanNotesHelper(this.data.NOTE_REGEXP, Note, this.notes_to_add, this.id_indexes)
+    }
 
-            if (parsed.identifier == null) {
-                // Need to make sure global_tags get added
-                parsed.note.tags.push(...this.global_tags.split(TAG_SEP))
-                this.inline_notes_to_add.push(parsed.note)
-                this.inline_id_indexes.push(position)
-            } else if (!this.data.EXISTING_IDS.includes(parsed.identifier!)) {
-                // Need to show an error
-                if (parsed.identifier == CLOZE_ERROR) {
-                    continue
-                }
-                console.warn("Note with id", parsed.identifier, " in file ", this.path, " does not exist in Anki!")
-            } else {
-                this.notes_to_edit.push(parsed)
-            }
-        }
+    scanInlineNotes() {
+        this.scanNotesHelper(this.data.INLINE_REGEXP, InlineNote, this.inline_notes_to_add, this.inline_id_indexes)
     }
 
     search(note_type: string, regexp_str: string) {
-        //Search the file for regex matches
-        //ignoring matches inside ignore_spans,
-        //and adding any matches to ignore_spans.
         for (let search_id of [true, false]) {
             for (let search_tags of [true, false]) {
                 let id_str = search_id ? ID_REGEXP_STR : ""
@@ -403,7 +362,6 @@ export class AllFile extends AbstractFile {
                     if (search_id) {
                         if (!(this.data.EXISTING_IDS.includes(parsed.identifier!))) {
                             if (parsed.identifier == CLOZE_ERROR) {
-                                // This means it wasn't actually a note! So we should remove it from ignore_spans
                                 this.ignore_spans.pop()
                                 continue
                             }
@@ -413,7 +371,6 @@ export class AllFile extends AbstractFile {
                         }
                     } else {
                         if (parsed.identifier == CLOZE_ERROR) {
-                            // This means it wasn't actually a note! So we should remove it from ignore_spans
                             this.ignore_spans.pop()
                             continue
                         }
@@ -447,35 +404,9 @@ export class AllFile extends AbstractFile {
     }
 
     writeIDs() {
-        let normal_inserts: [number, string][] = []
-        this.id_indexes.forEach(
-            (id_position: number, index: number) => {
-                const identifier: number | null = this.note_ids[index] ?? null
-                if (identifier) {
-                    normal_inserts.push([id_position, id_to_str(identifier, false, this.data.comment)])
-                }
-            }
-        )
-
-        let inline_inserts: [number, string][] = []
-        this.inline_id_indexes.forEach(
-            (id_position: number, index: number) => {
-                const identifier: number | null = this.note_ids[index + this.notes_to_add.length] ?? null //Since regular then inline
-                if (identifier) {
-                    inline_inserts.push([id_position, id_to_str(identifier, true, this.data.comment)])
-                }
-            }
-        )
-
-        let regex_inserts: [number, string][] = []
-        this.regex_id_indexes.forEach(
-            (id_position: number, index: number) => {
-                const identifier: number | null = this.note_ids[index + this.notes_to_add.length + this.inline_notes_to_add.length] ?? null // Since regular then inline then regex
-                if (identifier) {
-                    regex_inserts.push([id_position, "\n" + id_to_str(identifier, false, this.data.comment)])
-                }
-            }
-        )
+        let normal_inserts = buildIDInserts(this.id_indexes, this.note_ids, 0, false, this.data.comment)
+        let inline_inserts = buildIDInserts(this.inline_id_indexes, this.note_ids, this.notes_to_add.length, true, this.data.comment)
+        let regex_inserts = buildIDInserts(this.regex_id_indexes, this.note_ids, this.notes_to_add.length + this.inline_notes_to_add.length, false, this.data.comment, "\n")
 
         this.file = string_insert(this.file, normal_inserts.concat(inline_inserts).concat(regex_inserts))
         this.fix_newline_ids()
