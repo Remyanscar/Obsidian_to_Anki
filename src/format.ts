@@ -3,30 +3,26 @@ import {basename, extname} from 'path'
 import {Converter} from 'showdown'
 import {CachedMetadata} from 'obsidian'
 import * as c from './constants'
-
 import showdownHighlight from 'showdown-highlight'
 
 const ANKI_MATH_REGEXP: RegExp = /(\\\[[\s\S]*?\\\])|(\\\([\s\S]*?\\\))/g
 const HIGHLIGHT_REGEXP: RegExp = /==(.*?)==/g
-
 const MATH_REPLACE: string = "OBSTOANKIMATH"
 const INLINE_CODE_REPLACE: string = "OBSTOANKICODEINLINE"
 const DISPLAY_CODE_REPLACE: string = "OBSTOANKICODEDISPLAY"
-
 const CLOZE_REGEXP: RegExp = /(?:(?<!{){(?:c?(\d+)[:|])?(?!{))((?:[^\n][\n]?)+?)(?:(?<!})}(?!}))/g
 
 const IMAGE_EXTS: string[] = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".tiff"]
 const AUDIO_EXTS: string[] = [".wav", ".m4a", ".flac", ".mp3", ".wma", ".aac", ".webm"]
-
 const PARA_OPEN: string = "<p>"
 const PARA_CLOSE: string = "</p>"
 
 let cloze_unset_num: number = 1
-
 let converter: Converter = new Converter({
     simplifiedAutoLink: true,
     literalMidWordUnderscores: true,
-    tables: true, tasklists: true,
+    tables: true,
+    tasklists: true,
     simpleLineBreaks: true,
     requireSpaceBeforeHeadingText: true,
     extensions: [showdownHighlight]
@@ -42,7 +38,6 @@ function escapeHtml(unsafe: string): string {
 }
 
 export class FormatConverter {
-
     file_cache: CachedMetadata
     vault_name: string
     detectedMedia: Set<string>
@@ -63,13 +58,14 @@ export class FormatConverter {
 
     format_note_with_frozen_fields(note: AnkiConnectNote, frozen_fields_dict: Record<string, Record<string, string>>): void {
         for (let field in note.fields) {
-            note.fields[field] += frozen_fields_dict[note.modelName][field]
+            note.fields[field] += (frozen_fields_dict[note.modelName]?.[field] ?? "")
         }
     }
 
     obsidian_to_anki_math(note_text: string): string {
         return note_text.replace(
-            c.OBS_DISPLAY_MATH_REGEXP, "\\[$1\\]"
+            c.OBS_DISPLAY_MATH_REGEXP,
+            "\\[$1\\]"
         ).replace(
             c.OBS_INLINE_MATH_REGEXP,
             "\\($1\\)"
@@ -94,7 +90,7 @@ export class FormatConverter {
     }
 
     getAndFormatMedias(note_text: string): string {
-        if (!(this.file_cache.hasOwnProperty("embeds"))) {
+        if (!(this.file_cache.hasOwnProperty("embeds")) || !this.file_cache.embeds) {
             return note_text
         }
         for (let embed of this.file_cache.embeds) {
@@ -116,7 +112,7 @@ export class FormatConverter {
     }
 
     formatLinks(note_text: string): string {
-        if (!(this.file_cache.hasOwnProperty("links"))) {
+        if (!(this.file_cache.hasOwnProperty("links")) || !this.file_cache.links) {
             return note_text
         }
         for (let link of this.file_cache.links) {
@@ -137,7 +133,8 @@ export class FormatConverter {
     decensor(note_text: string, mask: string, replacements: string[], escape: boolean): string {
         for (let replacement of replacements) {
             note_text = note_text.replace(
-                mask, escape ? escapeHtml(replacement) : replacement
+                mask,
+                escape ? escapeHtml(replacement) : replacement
             )
         }
         return note_text
@@ -145,37 +142,45 @@ export class FormatConverter {
 
     format(note_text: string, cloze: boolean, highlights_to_cloze: boolean): string {
         note_text = this.obsidian_to_anki_math(note_text)
+
         //Extract the parts that are anki math
         let math_matches: string[]
         let inline_code_matches: string[]
         let display_code_matches: string[]
+
         const add_highlight_css: boolean = note_text.match(c.OBS_DISPLAY_CODE_REGEXP) ? true : false;
+
         [note_text, math_matches] = this.censor(note_text, ANKI_MATH_REGEXP, MATH_REPLACE);
         [note_text, display_code_matches] = this.censor(note_text, c.OBS_DISPLAY_CODE_REGEXP, DISPLAY_CODE_REPLACE);
         [note_text, inline_code_matches] = this.censor(note_text, c.OBS_CODE_REGEXP, INLINE_CODE_REPLACE);
+
         if (cloze) {
             if (highlights_to_cloze) {
                 note_text = note_text.replace(HIGHLIGHT_REGEXP, "{$1}")
             }
             note_text = this.curly_to_cloze(note_text)
         }
+
         note_text = this.getAndFormatMedias(note_text)
         note_text = this.formatLinks(note_text)
+
         //Special for formatting highlights now, but want to avoid any == in code
         note_text = note_text.replace(HIGHLIGHT_REGEXP, String.raw`<mark>$1</mark>`)
+
         note_text = this.decensor(note_text, DISPLAY_CODE_REPLACE, display_code_matches, false)
         note_text = this.decensor(note_text, INLINE_CODE_REPLACE, inline_code_matches, false)
+
         note_text = converter.makeHtml(note_text)
         note_text = this.decensor(note_text, MATH_REPLACE, math_matches, true).trim()
+
         // Remove unnecessary paragraph tag
         if (note_text.startsWith(PARA_OPEN) && note_text.endsWith(PARA_CLOSE)) {
             note_text = note_text.slice(PARA_OPEN.length, -1 * PARA_CLOSE.length)
         }
         if (add_highlight_css) {
-            note_text = '<link href="' + c.CODE_CSS_URL + '" rel="stylesheet">' + note_text
+            note_text = '<link href="' + c.CODE_CSS_URL + '" rel="stylesheet">\n' + note_text
         }
+
         return note_text
     }
-
-
 }

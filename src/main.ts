@@ -8,11 +8,12 @@ import {FileManager} from './files-manager'
 
 export default class MyPlugin extends Plugin {
 
-    settings: PluginSettings
-    note_types: Array<string>
-    fields_dict: Record<string, string[]>
-    added_media: string[]
-    file_hashes: Record<string, string>
+    settings!: PluginSettings
+    note_types!: Array<string>
+    fields_dict!: Record<string, string[]>
+    added_media!: string[]
+    file_hashes!: Record<string, string>
+    schedule_id?: number
 
     async getDefaultSettings(): Promise<PluginSettings> {
         let settings: PluginSettings = {
@@ -45,25 +46,30 @@ export default class MyPlugin extends Plugin {
             },
             IGNORED_FILE_GLOBS: DEFAULT_IGNORED_FILE_GLOBS,
         }
+
         /*Making settings from scratch, so need note types*/
         this.note_types = await AnkiConnect.invoke('modelNames') as Array<string>
         this.fields_dict = await this.generateFieldsDict()
+
         for (let note_type of this.note_types) {
             settings["CUSTOM_REGEXPS"][note_type] = ""
             const field_names: string[] = await AnkiConnect.invoke(
-                'modelFieldNames', {modelName: note_type}
+                'modelFieldNames',
+                {modelName: note_type}
             ) as string[]
             this.fields_dict[note_type] = field_names
-            settings["FILE_LINK_FIELDS"][note_type] = field_names[0]
+            settings["FILE_LINK_FIELDS"][note_type] = field_names[0] || ""
         }
+
         return settings
     }
 
     async generateFieldsDict(): Promise<Record<string, string[]>> {
-        let fields_dict = {}
+        let fields_dict: Record<string, string[]> = {}
         for (let note_type of this.note_types) {
             const field_names: string[] = await AnkiConnect.invoke(
-                'modelFieldNames', {modelName: note_type}
+                'modelFieldNames',
+                {modelName: note_type}
             ) as string[]
             fields_dict[note_type] = field_names
         }
@@ -72,14 +78,12 @@ export default class MyPlugin extends Plugin {
 
     async saveDefault(): Promise<void> {
         const default_sets = await this.getDefaultSettings()
-        this.saveData(
-            {
-                settings: default_sets,
-                "Added Media": [],
-                "File Hashes": {},
-                fields_dict: {}
-            }
-        )
+        this.saveData({
+            settings: default_sets,
+            "Added Media": [],
+            "File Hashes": {},
+            fields_dict: {}
+        })
     }
 
     async loadSettings(): Promise<PluginSettings> {
@@ -87,14 +91,12 @@ export default class MyPlugin extends Plugin {
         if (current_data == null || Object.keys(current_data).length != 4) {
             new Notice("Need to connect to Anki generate default settings...")
             const default_sets = await this.getDefaultSettings()
-            this.saveData(
-                {
-                    settings: default_sets,
-                    "Added Media": [],
-                    "File Hashes": {},
-                    fields_dict: {}
-                }
-            )
+            this.saveData({
+                settings: default_sets,
+                "Added Media": [],
+                "File Hashes": {},
+                fields_dict: {}
+            })
             new Notice("Default settings successfully generated!")
             return default_sets
         } else {
@@ -128,26 +130,25 @@ export default class MyPlugin extends Plugin {
             await this.saveDefault()
             const fields_dict = await this.generateFieldsDict()
             return fields_dict
+        } else {
+            return current_data.fields_dict
         }
-        return current_data.fields_dict
     }
 
     async saveAllData(): Promise<void> {
-        this.saveData(
-            {
-                settings: this.settings,
-                "Added Media": this.added_media,
-                "File Hashes": this.file_hashes,
-                fields_dict: this.fields_dict
-            }
-        )
+        this.saveData({
+            settings: this.settings,
+            "Added Media": this.added_media,
+            "File Hashes": this.file_hashes,
+            fields_dict: this.fields_dict
+        })
     }
 
     regenerateSettingsRegexps() {
         let regexp_section = this.settings["CUSTOM_REGEXPS"]
         // For new note types
         for (let note_type of this.note_types) {
-            this.settings["CUSTOM_REGEXPS"][note_type] = regexp_section.hasOwnProperty(note_type) ? regexp_section[note_type] : ""
+            this.settings["CUSTOM_REGEXPS"][note_type] = regexp_section.hasOwnProperty(note_type) ? (regexp_section[note_type] || "") : ""
         }
         // Removing old note types
         for (let note_type of Object.keys(this.settings["CUSTOM_REGEXPS"])) {
@@ -162,12 +163,14 @@ export default class MyPlugin extends Plugin {
      * @param tfolder - The TFolder to start the traversal from.
      * @returns An array of TFiles found within the folder and its subfolders.
      */
-    getAllTFilesInFolder(tfolder) {
-        const allTFiles = [];
+    getAllTFilesInFolder(tfolder: TFolder): TFile[] {
+        const allTFiles: TFile[] = [];
+
         // Check if the provided object is a TFolder
         if (!(tfolder instanceof TFolder)) {
             return allTFiles;
         }
+
         // Iterate through the contents of the folder
         tfolder.children.forEach((child) => {
             // If it's a TFile, add it to the result
@@ -178,10 +181,12 @@ export default class MyPlugin extends Plugin {
                 const filesInSubfolder = this.getAllTFilesInFolder(child);
                 allTFiles.push(...filesInSubfolder);
             }
-            // Ignore other types of files or objects
         });
+
+        // Ignore other types of files or objects
         return allTFiles;
     }
+
 
     async scanVault() {
         new Notice('Scanning vault, check console for details...');
@@ -192,12 +197,14 @@ export default class MyPlugin extends Plugin {
             new Notice("Error, couldn't connect to Anki! Check console for error message.")
             return
         }
+
         new Notice("Successfully connected to Anki! This could take a few minutes - please don't close Anki until the plugin is finished")
         const data: ParsedSettings = await settingToData(this.app, this.settings, this.fields_dict)
         const scanDir = this.app.vault.getAbstractFileByPath(this.settings.Defaults["Scan Directory"])
+
         let manager = null;
         if (scanDir !== null) {
-            let markdownFiles = [];
+            let markdownFiles: TFile[] = [];
             if (scanDir instanceof TFolder) {
                 console.info("Using custom scan directory: " + scanDir.path)
                 markdownFiles = this.getAllTFilesInFolder(scanDir);
@@ -213,9 +220,10 @@ export default class MyPlugin extends Plugin {
         await manager.initialiseFiles()
         await manager.requests_1()
         this.added_media = Array.from(manager.added_media_set)
+
         const hashes = manager.getHashes()
         for (let key in hashes) {
-            this.file_hashes[key] = hashes[key]
+            this.file_hashes[key] = hashes[key] || ""
         }
         new Notice("All done! Saving file hashes and added media now...")
         this.saveAllData()
@@ -223,6 +231,7 @@ export default class MyPlugin extends Plugin {
 
     async onload() {
         console.log('loading Obsidian_to_Anki...');
+
         addIcon('anki', ANKI_ICON)
 
         try {
@@ -233,7 +242,9 @@ export default class MyPlugin extends Plugin {
         }
 
         this.note_types = Object.keys(this.settings["CUSTOM_REGEXPS"])
+
         this.fields_dict = await this.loadFieldsDict()
+
         if (Object.keys(this.fields_dict).length == 0) {
             new Notice('Need to connect to Anki to generate fields dictionary...')
             try {
@@ -244,6 +255,7 @@ export default class MyPlugin extends Plugin {
                 return
             }
         }
+
         this.added_media = await this.loadAddedMedia()
         this.file_hashes = await this.loadFileHashes()
 
@@ -251,7 +263,7 @@ export default class MyPlugin extends Plugin {
 
         this.addRibbonIcon('anki', 'Obsidian_to_Anki - Scan Vault', async () => {
             await this.scanVault()
-        })
+        });
 
         this.addCommand({
             id: 'anki-scan-vault',
@@ -259,7 +271,8 @@ export default class MyPlugin extends Plugin {
             callback: async () => {
                 await this.scanVault()
             }
-        })
+        });
+
     }
 
     async onunload() {

@@ -1,8 +1,8 @@
-import { PluginSettings, ParsedSettings } from './interfaces/settings-interface'
-import { App } from 'obsidian'
+import {PluginSettings, ParsedSettings} from './interfaces/settings-interface'
+import {App} from 'obsidian'
 import * as AnkiConnect from './anki'
-import { ID_REGEXP_STR } from './note'
-import { escapeRegex } from './constants'
+import {ID_REGEXP_STR} from './note'
+import {escapeRegex} from './constants'
 
 export async function settingToData(app: App, settings: PluginSettings, fields_dict: Record<string, string[]>): Promise<ParsedSettings> {
     let result: ParsedSettings = <ParsedSettings>{}
