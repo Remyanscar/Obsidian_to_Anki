@@ -1,10 +1,10 @@
 /*Class for managing a list of files, and their Anki requests.*/
 
-import { ParsedSettings, FileData } from './interfaces/settings-interface'
-import { App, TFile, TFolder, TAbstractFile, CachedMetadata, FileSystemAdapter, Notice } from 'obsidian'
-import { AllFile } from './file'
+import {ParsedSettings, FileData} from './interfaces/settings-interface'
+import {App, TFile, TFolder, TAbstractFile, CachedMetadata, FileSystemAdapter, Notice} from 'obsidian'
+import {AllFile} from './file'
 import * as AnkiConnect from './anki'
-import { basename } from 'path'
+import {basename} from 'path'
 import multimatch from "multimatch"
 
 interface addNoteResponse {
@@ -62,7 +62,7 @@ export class FileManager {
     requests_1_result: any
     added_media_set: Set<string>
 
-    constructor(app: App, data:ParsedSettings, files: TFile[], file_hashes: Record<string, string>, added_media: string[]) {
+    constructor(app: App, data: ParsedSettings, files: TFile[], file_hashes: Record<string, string>, added_media: string[]) {
         this.app = app
         this.data = data
 
@@ -72,11 +72,12 @@ export class FileManager {
         this.file_hashes = file_hashes
         this.added_media_set = new Set(added_media)
     }
+
     getUrl(file: TFile): string {
         return "obsidian://open?vault=" + encodeURIComponent(this.data.vault_name) + String.raw`&file=` + encodeURIComponent(file.path)
     }
 
-    findFilesThatAreNotIgnored(files:TFile[], data:ParsedSettings):TFile[]{
+    findFilesThatAreNotIgnored(files: TFile[], data: ParsedSettings): TFile[] {
         let ignoredFiles = []
         ignoredFiles = multimatch(files.map(file => file.path), data.ignored_file_globs)
 
@@ -214,8 +215,7 @@ export class FileManager {
                 const dataFile = this.app.metadataCache.getFirstLinkpathDest(mediaLink, file.path)
                 if (!(dataFile)) {
                     console.warn("Couldn't locate media file ", mediaLink)
-                }
-                else {
+                } else {
                     // Located successfully, so treat as if we've added the media
                     this.added_media_set.add(mediaLink)
                     const realPath = (this.app.vault.adapter as FileSystemAdapter).getFullPath(dataFile.path)
@@ -243,7 +243,7 @@ export class FileManager {
         let note_ids_array_by_file: Requests1Result[0]["result"]
         try {
             note_ids_array_by_file = AnkiConnect.parse(response[0])
-        } catch(error) {
+        } catch (error) {
             console.error("Error: ", error)
             note_ids_array_by_file = response[0].result
         }
@@ -255,7 +255,7 @@ export class FileManager {
             let file_response: addNoteResponse[]
             try {
                 file_response = AnkiConnect.parse(note_ids_array_by_file[i])
-            } catch(error) {
+            } catch (error) {
                 console.error("Error: ", error)
                 file_response = note_ids_array_by_file[i].result
             }
@@ -315,7 +315,7 @@ export class FileManager {
         console.info("Requesting tags to be replaced...")
         for (let file of this.ownFiles) {
             let rem = file.getClearTags()
-            if(rem.params.notes.length) {
+            if (rem.params.notes.length) {
                 temp.push(rem)
             }
         }
@@ -329,7 +329,6 @@ export class FileManager {
         await AnkiConnect.invoke('multi', {actions: requests})
         console.info("All done!")
     }
-
 
 
 }
