@@ -1,10 +1,10 @@
 import { Notice, Plugin, addIcon, TFile, TFolder } from 'obsidian'
-import * as AnkiConnect from './src/anki'
-import { PluginSettings, ParsedSettings } from './src/interfaces/settings-interface'
-import { DEFAULT_IGNORED_FILE_GLOBS, SettingsTab } from './src/settings'
-import { ANKI_ICON } from './src/constants'
-import { settingToData } from './src/setting-to-data'
-import { FileManager } from './src/files-manager'
+import * as AnkiConnect from './anki'
+import { PluginSettings, ParsedSettings } from './interfaces/settings-interface'
+import { DEFAULT_IGNORED_FILE_GLOBS, SettingsTab } from './settings'
+import { ANKI_ICON } from './constants'
+import { settingToData } from './setting-to-data'
+import { FileManager } from './files-manager'
 
 export default class MyPlugin extends Plugin {
 
@@ -210,7 +210,7 @@ export default class MyPlugin extends Plugin {
 		} else {
 			manager = new FileManager(this.app, data, this.app.vault.getMarkdownFiles(), this.file_hashes, this.added_media);
 		}
-		
+
 		await manager.initialiseFiles()
 		await manager.requests_1()
 		this.added_media = Array.from(manager.added_media_set)

@@ -4,7 +4,7 @@ import { FROZEN_FIELDS_DICT } from './interfaces/field-interface'
 import { AnkiConnectNote, AnkiConnectNoteAndID } from './interfaces/note-interface'
 import { FileData } from './interfaces/settings-interface'
 import { Note, InlineNote, RegexNote, CLOZE_ERROR, NOTE_TYPE_ERROR, TAG_SEP, ID_REGEXP_STR, TAG_REGEXP_STR } from './note'
-import { Md5 } from 'ts-md5/dist/md5';
+import { Md5 } from 'ts-md5';
 import * as AnkiConnect from './anki'
 import * as c from './constants'
 import { FormatConverter } from './format'
@@ -187,7 +187,7 @@ abstract class AbstractFile {
         this.file = this.file.replace(this.data.EMPTY_REGEXP, "")
     }
 
-    getCreateDecks(): AnkiConnect.AnkiConnectRequest {        
+    getCreateDecks(): AnkiConnect.AnkiConnectRequest {
         let actions: AnkiConnect.AnkiConnectRequest[] = []
         for (let note of this.all_notes_to_add) {
             actions.push(AnkiConnect.createDeck(note.deckName))

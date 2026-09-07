@@ -1,10 +1,12 @@
 /*Class for managing a list of files, and their Anki requests.*/
+
 import { ParsedSettings, FileData } from './interfaces/settings-interface'
 import { App, TFile, TFolder, TAbstractFile, CachedMetadata, FileSystemAdapter, Notice } from 'obsidian'
 import { AllFile } from './file'
 import * as AnkiConnect from './anki'
 import { basename } from 'path'
 import multimatch from "multimatch"
+
 interface addNoteResponse {
     result: number,
     error: string | null
