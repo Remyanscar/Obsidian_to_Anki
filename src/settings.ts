@@ -331,17 +331,36 @@ export class SettingsTab extends PluginSettingTab {
     setup_syntax() {
         let {containerEl} = this;
         const plugin = (this as any).plugin
-        containerEl.createEl('h3', {text: 'Syntax Settings'})
+
+        new Setting(containerEl).setHeading().setName('Syntax Settings')
 
         for (let key of Object.keys(plugin.settings["Syntax"])) {
-            const setting = new Setting(containerEl).setName(key);
-            setting.addText(text => {
-                text.setValue(plugin.settings["Syntax"][key])
-                text.onChange(value => {
-                    plugin.settings["Syntax"][key] = value
-                    plugin.saveAllData().catch(console.error)
-                })
-            })
+            if (key === "Begin Note" || key === "End Note") {
+                new Setting(containerEl)
+                    .setName(key)
+                    .addTextArea(text => {
+                        text.setValue(plugin.settings["Syntax"][key])
+                        text.inputEl.style.resize = "both"
+                        text.inputEl.style.minWidth = "200px"
+                        text.inputEl.style.minHeight = "36px"
+                        text.inputEl.rows = 1
+                        text.inputEl.cols = 19
+                        text.onChange(value => {
+                            plugin.settings["Syntax"][key] = value
+                            plugin.saveAllData().catch(console.error)
+                        })
+                    })
+            } else {
+                new Setting(containerEl)
+                    .setName(key)
+                    .addText(text => {
+                        text.setValue(plugin.settings["Syntax"][key])
+                        text.onChange(value => {
+                            plugin.settings["Syntax"][key] = value
+                            plugin.saveAllData().catch(console.error)
+                        })
+                    })
+            }
         }
     }
 
