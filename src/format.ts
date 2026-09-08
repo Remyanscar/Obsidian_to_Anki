@@ -139,7 +139,34 @@ export class FormatConverter {
         return note_text
     }
 
+    /**
+     * Removes leading blockquote characters ('>') used in Obsidian callouts from the note text.
+     * Also strips Obsidian block IDs (e.g., ^a1b2c3) to prevent them from appearing in Anki cards.
+     */
+    private cleanCalloutSyntax(text: string): string {
+        if (!text) return text;
+
+        const lines = text.split("\n");
+        const nonEmptyLines = lines.filter(line => line.trim().length > 0);
+
+        const isCalloutBlock = nonEmptyLines.length > 0 && nonEmptyLines.every(line => line.trim().startsWith(">"));
+
+        let cleanedText = text;
+        if (isCalloutBlock) {
+            cleanedText = lines.map(line => line.replace(/^[ \t]*>[ \t]?/, "")).join("\n");
+        }
+
+        // Remove Obsidian block identifiers
+        cleanedText = cleanedText.replace(/^[ \t]*\^[a-zA-Z0-9]{6,}[ \t]*$/gm, "");
+
+        return cleanedText;
+    }
+
     format(note_text: string, cloze: boolean, highlights_to_cloze: boolean): string {
+
+        // Strip callout syntax before any further processing
+        note_text = this.cleanCalloutSyntax(note_text);
+
         note_text = this.obsidian_to_anki_math(note_text)
 
         //Extract the parts that are anki math
