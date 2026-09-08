@@ -47,6 +47,11 @@ export default class MyPlugin extends Plugin {
             },
             IGNORED_FILE_GLOBS: DEFAULT_IGNORED_FILE_GLOBS,
             IGNORED_FOLDERS: [],
+            IGNORED_METADATA_REGEXPS: [
+                "^(?:[a-zA-Z]*:|-->)",
+                "^——————————>",
+                "^<——————————$"
+            ],
         }
 
         /*Making settings from scratch, so need note types*/
@@ -188,6 +193,7 @@ export default class MyPlugin extends Plugin {
 
         new Notice("Successfully connected to Anki! This could take a few minutes - please don't close Anki until the plugin is finished")
         const data: ParsedSettings = await settingToData(this.app, this.settings, this.fields_dict)
+        data.ignored_metadata_regexps = this.settings.IGNORED_METADATA_REGEXPS || []
         const scanDir = this.app.vault.getAbstractFileByPath(this.settings.Defaults["Scan Directory"])
 
         let manager = null;

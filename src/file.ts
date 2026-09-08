@@ -111,7 +111,7 @@ export abstract class AbstractFile {
         this.url = url
         this.original_file = this.file
         this.file_cache = file_cache
-        this.formatter = new FormatConverter(file_cache, this.data.vault_name)
+        this.formatter = new FormatConverter(file_cache, this.data.vault_name, this.data) // <--- dodano trzeci argument (data)
     }
 
     setup_frozen_fields_dict() {

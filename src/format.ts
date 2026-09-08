@@ -1,4 +1,5 @@
 import {AnkiConnectNote} from './interfaces/note-interface'
+import {FileData} from './interfaces/settings-interface'
 import {basename, extname} from 'path'
 import {Converter} from 'showdown'
 import {CachedMetadata} from 'obsidian'
@@ -41,11 +42,13 @@ export class FormatConverter {
     file_cache: CachedMetadata
     vault_name: string
     detectedMedia: Set<string>
+    ignored_metadata_regexps: string[]
 
-    constructor(file_cache: CachedMetadata, vault_name: string) {
+    constructor(file_cache: CachedMetadata, vault_name: string, file_data?: FileData) {
         this.vault_name = vault_name
         this.file_cache = file_cache
         this.detectedMedia = new Set()
+        this.ignored_metadata_regexps = file_data?.ignored_metadata_regexps || []
     }
 
     getUrlFromLink(link: string): string {
@@ -140,6 +143,25 @@ export class FormatConverter {
     }
 
     /**
+     * Strips user-defined metadata artifacts and patterns from the note text using configured regular expressions.
+     * TODO: Add support for filtering metadata dynamically based on the note type (standard, inline, custom regex, etc.).
+     */
+    private cleanMetadataArtifacts(text: string): string {
+        if (!text || !this.ignored_metadata_regexps || this.ignored_metadata_regexps.length === 0) return text;
+
+        let cleanedText = text;
+        for (let pattern of this.ignored_metadata_regexps) {
+            try {
+                const regex = new RegExp(pattern, "mg");
+                cleanedText = cleanedText.replace(regex, "");
+            } catch (e) {
+                console.error("Invalid metadata cleanup regex pattern: ", pattern, e);
+            }
+        }
+        return cleanedText;
+    }
+
+    /**
      * Removes leading blockquote characters ('>') used in Obsidian callouts from the note text.
      * Also strips Obsidian block IDs (e.g., ^a1b2c3) to prevent them from appearing in Anki cards.
      */
@@ -164,8 +186,9 @@ export class FormatConverter {
 
     format(note_text: string, cloze: boolean, highlights_to_cloze: boolean): string {
 
-        // Strip callout syntax before any further processing
+        // Strip callout syntax and custom metadata artifacts before any further processing
         note_text = this.cleanCalloutSyntax(note_text);
+        note_text = this.cleanMetadataArtifacts(note_text);
 
         note_text = this.obsidian_to_anki_math(note_text)
 

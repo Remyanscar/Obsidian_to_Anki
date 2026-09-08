@@ -543,6 +543,38 @@ export class SettingsTab extends PluginSettingTab {
         }
     }
 
+    setup_ignored_metadata() {
+        let {containerEl} = this;
+        const plugin = (this as any).plugin
+
+        new Setting(containerEl).setHeading().setName('Ignored Metadata Artifacts')
+
+        if (!(plugin.settings.hasOwnProperty("IGNORED_METADATA_REGEXPS"))) {
+            plugin.settings["IGNORED_METADATA_REGEXPS"] = [
+                "^(?:[a-zA-Z]*:|-->)",
+                "^——————————>",
+                "^<——————————$"
+            ]
+        }
+
+        const setting = new Setting(containerEl)
+            .setName("Metadata Cleanup Regular Expressions")
+            .setDesc("List regular expression patterns (one per line) to remove metadata artifacts from notes before formatting.");
+
+        setting.addTextArea(text => {
+            text.setValue(plugin.settings["IGNORED_METADATA_REGEXPS"].join("\n"))
+            text.setPlaceholder("Example: ^(?:[a-zA-Z]*:|-->)")
+            text.inputEl.style.resize = "both"
+            text.inputEl.style.minWidth = "250px"
+            text.inputEl.style.minHeight = "80px"
+            text.inputEl.rows = 4
+            text.onChange(value => {
+                plugin.settings["IGNORED_METADATA_REGEXPS"] = value.split(/\r?\n/).map(e => e.trim()).filter(e => e !== "")
+                plugin.saveAllData().catch(console.error)
+            })
+        })
+    }
+
     setup_display() {
         let {containerEl} = this
         containerEl.replaceChildren()
@@ -562,6 +594,7 @@ export class SettingsTab extends PluginSettingTab {
         this.setup_defaults()
         this.setup_buttons()
         this.setup_ignore_files()
+        this.setup_ignored_metadata()
     }
 
     display() {

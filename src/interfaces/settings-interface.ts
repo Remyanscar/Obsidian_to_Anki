@@ -30,11 +30,11 @@ export interface PluginSettings {
         "Add Obsidian Tags": boolean
     },
     IGNORED_FILE_GLOBS: string[],
-    IGNORED_FOLDERS: string[]
+    IGNORED_FOLDERS: string[],
+    IGNORED_METADATA_REGEXPS: string[]
 }
 
 export interface FileData {
-    //All the data that a file would need.
     fields_dict: FIELDS_DICT
     custom_regexps: Record<string, string>
     file_link_fields: Record<string, string>
@@ -53,6 +53,7 @@ export interface FileData {
     comment: boolean
     add_context: boolean
     add_obs_tags: boolean
+    ignored_metadata_regexps: string[]
 }
 
 export interface ParsedSettings extends FileData {
@@ -60,4 +61,5 @@ export interface ParsedSettings extends FileData {
     folder_decks: Record<string, string>
     folder_tags: Record<string, string>
     ignored_file_globs: string[]
+    ignored_metadata_regexps: string[]
 }
