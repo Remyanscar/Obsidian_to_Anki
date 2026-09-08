@@ -23,6 +23,7 @@ export const DEFAULT_IGNORED_FILE_GLOBS = [
 export class SettingsTab extends PluginSettingTab {
     private selectedNoteType: string = "";
     private selectedFolder: string = "";
+    private folderSearchTerm: string = "";
 
     setup_custom_regexp(note_type: string, container: HTMLElement) {
         const plugin = (this as any).plugin
@@ -234,7 +235,6 @@ export class SettingsTab extends PluginSettingTab {
         if (!(plugin.settings.hasOwnProperty("IGNORED_FOLDERS"))) {
             plugin.settings.IGNORED_FOLDERS = []
         }
-
         if (!(plugin.settings.hasOwnProperty("FOLDER_DECKS"))) {
             plugin.settings.FOLDER_DECKS = {}
         }
@@ -246,15 +246,31 @@ export class SettingsTab extends PluginSettingTab {
             .setName("Folders to ignore")
             .setDesc("List folder names or paths (one per line) to exclude them and their subfolders from the dropdown below.");
 
+        new Setting(containerEl)
+            .setName("Search Folders")
+            .setDesc("Type to quickly filter the folder dropdown below.")
+            .addSearch(search => {
+                search.setPlaceholder("Find folder...")
+                search.onChange(value => {
+                    this.folderSearchTerm = value.toLowerCase();
+                    rebuildDropdown();
+                })
+            });
+
         const foldersWrapper = containerEl.createDiv();
 
         const rebuildDropdown = () => {
             foldersWrapper.replaceChildren();
-            const folder_list = this.get_folders();
+
+            let folder_list = this.get_folders();
+
+            if (this.folderSearchTerm) {
+                folder_list = folder_list.filter(f => f.path.toLowerCase().includes(this.folderSearchTerm));
+            }
 
             if (folder_list.length === 0) {
                 foldersWrapper.createEl('p', {
-                    text: 'No folders available or all folders are ignored.',
+                    text: this.folderSearchTerm ? 'No folders match your search.' : 'No folders available or all folders are ignored.',
                     cls: 'text-muted'
                 });
                 return;
@@ -275,6 +291,10 @@ export class SettingsTab extends PluginSettingTab {
                 .setName("Select Folder")
                 .setDesc("Choose a folder to configure its specific default deck and tags.");
 
+            const statusBadge = dropdownSetting.descEl.createDiv();
+            statusBadge.style.marginTop = "6px";
+            statusBadge.style.fontWeight = "bold";
+
             dropdownSetting.addDropdown(cb => {
                 const folderDecks = plugin.settings.FOLDER_DECKS || {};
                 const folderTags = plugin.settings.FOLDER_TAGS || {};
@@ -285,27 +305,49 @@ export class SettingsTab extends PluginSettingTab {
 
                     let label = f.path;
                     if (hasCustomDeck && hasCustomTags) {
-                        label = `✏️ ${f.path}  [Custom Deck & Tags]`;
+                        label = `${f.path}   🟢[Deck & Tags]`;
                     } else if (hasCustomDeck) {
-                        label = `✏️ ${f.path}  [Custom Deck]`;
+                        label = `${f.path}   🟡[Deck]`;
                     } else if (hasCustomTags) {
-                        label = `✏️ ${f.path}  [Custom Tags]`;
+                        label = `${f.path}   🔵[Tags]`;
                     }
 
                     cb.addOption(f.path, label);
                 }
-                cb.setValue(this.selectedFolder);
 
+                cb.setValue(this.selectedFolder);
                 cb.selectEl.style.fontWeight = "500";
-                cb.selectEl.style.color = "var(--text-accent)";
+
+                const updateBadge = (folderPath: string) => {
+                    const hasCustomDeck = Boolean(folderDecks[folderPath] && folderDecks[folderPath].trim() !== "");
+                    const hasCustomTags = Boolean(folderTags[folderPath] && folderTags[folderPath].trim() !== "");
+
+                    if (hasCustomDeck && hasCustomTags) {
+                        statusBadge.setText("Active: Custom Deck & Tags");
+                        statusBadge.style.color = "var(--color-green)";
+                    } else if (hasCustomDeck) {
+                        statusBadge.setText("Active: Custom Deck Only");
+                        statusBadge.style.color = "var(--color-yellow)";
+                    } else if (hasCustomTags) {
+                        statusBadge.setText("Active: Custom Tags Only");
+                        statusBadge.style.color = "var(--color-blue)";
+                    } else {
+                        statusBadge.setText("Active: Default Vault Settings");
+                        statusBadge.style.color = "var(--text-muted)";
+                    }
+                };
+
+                updateBadge(this.selectedFolder);
 
                 cb.onChange(value => {
                     this.selectedFolder = value;
+                    updateBadge(value);
                     this.renderFolderSettings(settingsContainer);
                 })
             });
 
             foldersWrapper.insertBefore(dropdownSetting.settingEl, settingsContainer);
+
             this.renderFolderSettings(settingsContainer);
         };
 
