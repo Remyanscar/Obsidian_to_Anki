@@ -46,6 +46,7 @@ export default class MyPlugin extends Plugin {
                 "Add Obsidian Tags": false,
             },
             IGNORED_FILE_GLOBS: DEFAULT_IGNORED_FILE_GLOBS,
+            IGNORED_FOLDERS: [],
         }
 
         /*Making settings from scratch, so need note types*/

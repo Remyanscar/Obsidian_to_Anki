@@ -1,18 +1,28 @@
 /*Performing plugin operations on Markdown file contents*/
 
-import { FROZEN_FIELDS_DICT } from './interfaces/field-interface'
-import { AnkiConnectNote, AnkiConnectNoteAndID } from './interfaces/note-interface'
-import { FileData } from './interfaces/settings-interface'
-import { AbstractNote, Note, InlineNote, RegexNote, CLOZE_ERROR, NOTE_TYPE_ERROR, TAG_SEP, ID_REGEXP_STR, TAG_REGEXP_STR } from './note'
-import { Md5 } from 'ts-md5';
+import {FROZEN_FIELDS_DICT} from './interfaces/field-interface'
+import {AnkiConnectNote, AnkiConnectNoteAndID} from './interfaces/note-interface'
+import {FileData} from './interfaces/settings-interface'
+import {
+    AbstractNote,
+    Note,
+    InlineNote,
+    RegexNote,
+    CLOZE_ERROR,
+    NOTE_TYPE_ERROR,
+    TAG_SEP,
+    ID_REGEXP_STR,
+    TAG_REGEXP_STR
+} from './note'
+import {Md5} from 'ts-md5';
 import * as AnkiConnect from './anki'
 import * as c from './constants'
-import { FormatConverter } from './format'
-import { CachedMetadata, HeadingCache } from 'obsidian'
+import {FormatConverter} from './format'
+import {CachedMetadata, HeadingCache} from 'obsidian'
 
 const double_regexp: RegExp = /(?:\r\n|\r|\n)((?:\r\n|\r|\n)(?:<!--)?ID: \d+)/g
 
-function id_to_str(identifier:number, inline:boolean = false, comment:boolean = false): string {
+function id_to_str(identifier: number, inline: boolean = false, comment: boolean = false): string {
     let result = "ID: " + identifier.toString()
     if (comment) {
         result = "<!--" + result + "-->"
@@ -27,7 +37,7 @@ function id_to_str(identifier:number, inline:boolean = false, comment:boolean = 
 
 function string_insert(text: string, position_inserts: Array<[number, string]>): string {
     let offset = 0
-    let sorted_inserts: Array<[number, string]> = position_inserts.sort((a, b):number => a[0] - b[0])
+    let sorted_inserts: Array<[number, string]> = position_inserts.sort((a, b): number => a[0] - b[0])
     for (let insertion of sorted_inserts) {
         let position = insertion[0]
         let insert_str = insertion[1]
@@ -94,7 +104,7 @@ export abstract class AbstractFile {
 
     formatter: FormatConverter
 
-    protected constructor(file_contents: string, path:string, url: string, data: FileData, file_cache: CachedMetadata) {
+    protected constructor(file_contents: string, path: string, url: string, data: FileData, file_cache: CachedMetadata) {
         this.data = data
         this.file = file_contents
         this.path = path
@@ -260,7 +270,7 @@ export class AllFile extends AbstractFile {
     regex_notes_to_add!: AnkiConnectNote[]
     regex_id_indexes!: number[]
 
-    constructor(file_contents: string, path:string, url: string, data: FileData, file_cache: CachedMetadata) {
+    constructor(file_contents: string, path: string, url: string, data: FileData, file_cache: CachedMetadata) {
         super(file_contents, path, url, data, file_cache)
         this.custom_regexps = data.custom_regexps
     }

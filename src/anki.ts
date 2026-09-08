@@ -1,5 +1,5 @@
 const ANKI_PORT: number = 8765
-import { AnkiConnectNote } from './interfaces/note-interface'
+import {AnkiConnectNote} from './interfaces/note-interface'
 
 export interface AnkiConnectRequest {
     action: string,
@@ -7,7 +7,7 @@ export interface AnkiConnectRequest {
     params: any
 }
 
-export function invoke(action: string, params={}) {
+export function invoke(action: string, params = {}) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest()
         xhr.addEventListener('error', () => reject('failed to issue request'));
@@ -43,7 +43,7 @@ export function invoke(action: string, params={}) {
     });
 }
 
-export function parse<T>(response: {error: string | null, result: T}): T {
+export function parse<T>(response: { error: string | null, result: T }): T {
     if (Object.getOwnPropertyNames(response).length != 2) {
         throw 'response has an unexpected number of fields'
     }
@@ -59,8 +59,8 @@ export function parse<T>(response: {error: string | null, result: T}): T {
     return response.result as T
 }
 
-function request(action: string, params={}): AnkiConnectRequest {
-    return {action, version:6, params}
+function request(action: string, params = {}): AnkiConnectRequest {
+    return {action, version: 6, params}
 }
 
 export function multi(actions: AnkiConnectRequest[]): AnkiConnectRequest {

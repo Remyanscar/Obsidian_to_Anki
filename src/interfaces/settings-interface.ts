@@ -29,7 +29,8 @@ export interface PluginSettings {
         "ID Comments": boolean,
         "Add Obsidian Tags": boolean
     },
-    IGNORED_FILE_GLOBS: string[]
+    IGNORED_FILE_GLOBS: string[],
+    IGNORED_FOLDERS: string[]
 }
 
 export interface FileData {
@@ -41,14 +42,12 @@ export interface FileData {
     template: AnkiConnectNote
     EXISTING_IDS: number[]
     vault_name: string
-
     FROZEN_REGEXP: RegExp
     DECK_REGEXP: RegExp
     TAG_REGEXP: RegExp
     NOTE_REGEXP: RegExp
     INLINE_REGEXP: RegExp
     EMPTY_REGEXP: RegExp
-
     curly_cloze: boolean
     highlights_to_cloze: boolean
     comment: boolean
