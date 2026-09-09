@@ -13,7 +13,8 @@ const defaultDescs = {
     "CurlyCloze": "Convert {cloze deletions} -> {{c1::cloze deletions}} on note types that have a 'Cloze' in their name.",
     "CurlyCloze - Highlights to Clozes": "Convert ==highlights== -> {highlights} to be processed by CurlyCloze.",
     "ID Comments": "Wrap note IDs in a HTML comment.",
-    "Add Obsidian Tags": "Interpret #tags in the fields of a note as Anki tags, removing them from the note text in Anki."
+    "Add Obsidian Tags": "Interpret #tags in the fields of a note as Anki tags, removing them from the note text in Anki.",
+    "Multiline YAML Tags": "Enable this to parse tags formatted as a multiline YAML list (e.g., - tag1\\n  - tag2) instead of a single line."
 }
 
 export const DEFAULT_IGNORED_FILE_GLOBS = [
@@ -486,6 +487,9 @@ export class SettingsTab extends PluginSettingTab {
         }
         if (!(plugin.settings["Defaults"].hasOwnProperty("Add Obsidian Tags"))) {
             plugin.settings["Defaults"]["Add Obsidian Tags"] = false
+        }
+        if (!(plugin.settings["Defaults"].hasOwnProperty("Multiline YAML Tags"))) {
+            plugin.settings["Defaults"]["Multiline YAML Tags"] = false
         }
 
         for (let key of Object.keys(plugin.settings["Defaults"])) {

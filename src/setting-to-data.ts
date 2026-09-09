@@ -27,10 +27,17 @@ export async function settingToData(app: App, settings: PluginSettings, fields_d
     }
     result.EXISTING_IDS = await AnkiConnect.invoke('findNotes', {query: ""}) as number[]
 
-    //RegExp section
+    result.multiline_yaml_tags = settings.Defaults["Multiline YAML Tags"] ?? false
+
     result.FROZEN_REGEXP = new RegExp(escapeRegex(settings.Syntax["Frozen Fields Line"]) + String.raw` - (.*?):\n((?:[^\n][\n]?)+)`, "g")
     result.DECK_REGEXP = new RegExp(String.raw`^` + escapeRegex(settings.Syntax["Target Deck Line"]) + String.raw`(?:\n|: )(.*)`, "m")
-    result.TAG_REGEXP = new RegExp(String.raw`^` + escapeRegex(settings.Syntax["File Tags Line"]) + String.raw`(?:\n|: )(.*)`, "m")
+
+    if (result.multiline_yaml_tags) {
+        result.TAG_REGEXP = new RegExp(String.raw`^` + escapeRegex(settings.Syntax["File Tags Line"]) + String.raw`:\s*\n((?:^[ \t]*-[ \t]+.*\n?)+)`, "m")
+    } else {
+        result.TAG_REGEXP = new RegExp(String.raw`^` + escapeRegex(settings.Syntax["File Tags Line"]) + String.raw`(?:\n|: )(.*)`, "m")
+    }
+
     result.NOTE_REGEXP = new RegExp(String.raw`^` + escapeRegex(settings.Syntax["Begin Note"]) + String.raw`([\s\S]*?\n)` + escapeRegex(settings.Syntax["End Note"]), "gm")
     result.INLINE_REGEXP = new RegExp(escapeRegex(settings.Syntax["Begin Inline Note"]) + String.raw`(.*?)` + escapeRegex(settings.Syntax["End Inline Note"]), "g")
     result.EMPTY_REGEXP = new RegExp(escapeRegex(settings.Syntax["Delete Note Line"]) + ID_REGEXP_STR, "g")

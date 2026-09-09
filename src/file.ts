@@ -111,7 +111,7 @@ export abstract class AbstractFile {
         this.url = url
         this.original_file = this.file
         this.file_cache = file_cache
-        this.formatter = new FormatConverter(file_cache, this.data.vault_name, this.data) // <--- dodano trzeci argument (data)
+        this.formatter = new FormatConverter(file_cache, this.data.vault_name, this.data)
     }
 
     setup_frozen_fields_dict() {
@@ -146,8 +146,23 @@ export abstract class AbstractFile {
     }
 
     setup_global_tags() {
-        const result = this.file.match(this.data.TAG_REGEXP)
-        this.global_tags = result ? (result[1] || "") : ""
+        const result = this.file.match(this.data.TAG_REGEXP);
+
+        if (result && result[1]) {
+            if (this.data.multiline_yaml_tags) {
+                const lines = result[1].split('\n');
+
+                const tags = lines
+                    .map(line => line.replace(/^[ \t]*-[ \t]+/, '').trim())
+                    .filter(t => t !== '');
+
+                this.global_tags = tags.join(" ");
+            } else {
+                this.global_tags = result[1] || "";
+            }
+        } else {
+            this.global_tags = "";
+        }
     }
 
     getHash(): string {

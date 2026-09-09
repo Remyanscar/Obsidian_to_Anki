@@ -17,6 +17,7 @@ export interface PluginSettings {
         "Delete Note Line": string,
         "Frozen Fields Line": string
     },
+    IGNORED_METADATA_REGEXPS: string[]
     Defaults: {
         "Scan Directory": string,
         "Tag": string,
@@ -28,10 +29,10 @@ export interface PluginSettings {
         "CurlyCloze - Highlights to Clozes": boolean,
         "ID Comments": boolean,
         "Add Obsidian Tags": boolean
+        "Multiline YAML Tags": boolean;
     },
     IGNORED_FILE_GLOBS: string[],
     IGNORED_FOLDERS: string[],
-    IGNORED_METADATA_REGEXPS: string[]
 }
 
 export interface FileData {
@@ -54,6 +55,7 @@ export interface FileData {
     add_context: boolean
     add_obs_tags: boolean
     ignored_metadata_regexps: string[]
+    multiline_yaml_tags: boolean;
 }
 
 export interface ParsedSettings extends FileData {
