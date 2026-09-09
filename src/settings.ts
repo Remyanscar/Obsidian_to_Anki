@@ -23,8 +23,10 @@ export const DEFAULT_IGNORED_FILE_GLOBS = [
 export class SettingsTab extends PluginSettingTab {
     private selectedNoteType: string = "";
     private selectedFolder: string = "";
+    private folderSearchTerm: string = "";
+    private noteTypeSearchTerm: string = "";
 
-    setup_custom_regexp(note_type: string, container: HTMLElement) {
+    setup_custom_regexp(note_type: string, container: HTMLElement, onUpdate?: () => void) {
         const plugin = (this as any).plugin
         let regexp_section = plugin.settings["CUSTOM_REGEXPS"]
 
@@ -41,6 +43,7 @@ export class SettingsTab extends PluginSettingTab {
             text.onChange(value => {
                 plugin.settings["CUSTOM_REGEXPS"][note_type] = value
                 plugin.saveAllData().catch(console.error)
+                if (onUpdate) onUpdate();
             })
         })
     }
@@ -108,10 +111,11 @@ export class SettingsTab extends PluginSettingTab {
         })
     }
 
-    renderNoteTypeSettings(container: HTMLElement) {
+    renderNoteTypeSettings(container: HTMLElement, onUpdate?: () => void) {
         container.replaceChildren();
         if (!this.selectedNoteType) return;
-        this.setup_custom_regexp(this.selectedNoteType, container);
+
+        this.setup_custom_regexp(this.selectedNoteType, container, onUpdate);
         this.setup_link_field(this.selectedNoteType, container);
         this.setup_context_field(this.selectedNoteType, container);
     }
@@ -121,9 +125,6 @@ export class SettingsTab extends PluginSettingTab {
         const plugin = (this as any).plugin
 
         if (!plugin.note_types || plugin.note_types.length === 0) return;
-        if (!this.selectedNoteType || !plugin.note_types.includes(this.selectedNoteType)) {
-            this.selectedNoteType = plugin.note_types[0] || "";
-        }
 
         containerEl.createEl('h3', {text: 'Note Type Settings'})
 
@@ -131,28 +132,95 @@ export class SettingsTab extends PluginSettingTab {
             plugin.settings.CONTEXT_FIELDS = {}
         }
 
-        const settingsContainer = containerEl.createDiv();
-        settingsContainer.style.borderLeft = "2px solid var(--text-muted)";
-        settingsContainer.style.paddingLeft = "1.5em";
-        settingsContainer.style.marginLeft = "0.5em";
-        settingsContainer.style.marginBottom = "2em";
+        new Setting(containerEl)
+            .setName("Search Note Types")
+            .setDesc("Type to quickly filter the note types dropdown below.")
+            .addSearch(search => {
+                search.setPlaceholder("Find note type...")
+                search.onChange(value => {
+                    this.noteTypeSearchTerm = value.toLowerCase();
+                    rebuildNoteTypeDropdown();
+                })
+            });
 
-        const dropdownSetting = new Setting(containerEl)
-            .setName("Select Note Type")
-            .setDesc("Choose a note type to configure its specific fields and regex.");
+        const noteTypesWrapper = containerEl.createDiv();
 
-        dropdownSetting.addDropdown(cb => {
-            for (let nt of plugin.note_types) {
-                cb.addOption(nt, nt);
+        const rebuildNoteTypeDropdown = () => {
+            noteTypesWrapper.replaceChildren();
+
+            let filtered_types = plugin.note_types;
+            if (this.noteTypeSearchTerm) {
+                filtered_types = filtered_types.filter((nt: string) => nt.toLowerCase().includes(this.noteTypeSearchTerm));
             }
-            cb.setValue(this.selectedNoteType);
-            cb.onChange(value => {
-                this.selectedNoteType = value;
-                this.renderNoteTypeSettings(settingsContainer);
-            })
-        });
 
-        this.renderNoteTypeSettings(settingsContainer);
+            if (filtered_types.length === 0) {
+                noteTypesWrapper.createEl('p', {
+                    text: 'No note types match your search.',
+                    cls: 'text-muted'
+                });
+                return;
+            }
+
+            if (!this.selectedNoteType || !filtered_types.includes(this.selectedNoteType)) {
+                this.selectedNoteType = filtered_types[0] || "";
+            }
+
+            const settingsContainer = noteTypesWrapper.createDiv();
+            settingsContainer.style.borderLeft = "2px solid var(--text-muted)";
+            settingsContainer.style.paddingLeft = "1.5em";
+            settingsContainer.style.marginLeft = "0.5em";
+            settingsContainer.style.marginBottom = "2em";
+            settingsContainer.style.marginTop = "1em";
+
+            const dropdownSetting = new Setting(noteTypesWrapper)
+                .setName("Select Note Type")
+                .setDesc("Choose a note type to configure its specific fields and regex.");
+
+            const statusBadge = dropdownSetting.descEl.createDiv();
+            statusBadge.style.marginTop = "6px";
+            statusBadge.style.fontWeight = "bold";
+
+            const updateBadge = (nt: string) => {
+                const hasCustomRegex = Boolean(plugin.settings["CUSTOM_REGEXPS"][nt] && plugin.settings["CUSTOM_REGEXPS"][nt].trim() !== "");
+                if (hasCustomRegex) {
+                    statusBadge.setText("Active: Custom Regex configuration");
+                    statusBadge.style.color = "var(--color-purple)";
+                } else {
+                    statusBadge.setText("Active: Default configuration");
+                    statusBadge.style.color = "var(--text-muted)";
+                }
+            };
+
+            dropdownSetting.addDropdown(cb => {
+                for (let nt of filtered_types) {
+                    const hasCustomRegex = Boolean(plugin.settings["CUSTOM_REGEXPS"][nt] && plugin.settings["CUSTOM_REGEXPS"][nt].trim() !== "");
+
+                    let label = nt;
+                    if (hasCustomRegex) {
+                        label = `${nt}   🟣`;
+                    }
+
+                    cb.addOption(nt, label);
+                }
+
+                cb.setValue(this.selectedNoteType);
+                cb.selectEl.style.fontWeight = "500";
+
+                updateBadge(this.selectedNoteType);
+
+                cb.onChange(value => {
+                    this.selectedNoteType = value;
+                    updateBadge(value);
+                    this.renderNoteTypeSettings(settingsContainer, () => updateBadge(this.selectedNoteType));
+                })
+            });
+
+            noteTypesWrapper.insertBefore(dropdownSetting.settingEl, settingsContainer);
+
+            this.renderNoteTypeSettings(settingsContainer, () => updateBadge(this.selectedNoteType));
+        };
+
+        rebuildNoteTypeDropdown();
     }
 
     get_folders(): TFolder[] {
@@ -234,7 +302,6 @@ export class SettingsTab extends PluginSettingTab {
         if (!(plugin.settings.hasOwnProperty("IGNORED_FOLDERS"))) {
             plugin.settings.IGNORED_FOLDERS = []
         }
-
         if (!(plugin.settings.hasOwnProperty("FOLDER_DECKS"))) {
             plugin.settings.FOLDER_DECKS = {}
         }
@@ -246,15 +313,31 @@ export class SettingsTab extends PluginSettingTab {
             .setName("Folders to ignore")
             .setDesc("List folder names or paths (one per line) to exclude them and their subfolders from the dropdown below.");
 
+        new Setting(containerEl)
+            .setName("Search Folders")
+            .setDesc("Type to quickly filter the folder dropdown below.")
+            .addSearch(search => {
+                search.setPlaceholder("Find folder...")
+                search.onChange(value => {
+                    this.folderSearchTerm = value.toLowerCase();
+                    rebuildDropdown();
+                })
+            });
+
         const foldersWrapper = containerEl.createDiv();
 
         const rebuildDropdown = () => {
             foldersWrapper.replaceChildren();
-            const folder_list = this.get_folders();
+
+            let folder_list = this.get_folders();
+
+            if (this.folderSearchTerm) {
+                folder_list = folder_list.filter(f => f.path.toLowerCase().includes(this.folderSearchTerm));
+            }
 
             if (folder_list.length === 0) {
                 foldersWrapper.createEl('p', {
-                    text: 'No folders available or all folders are ignored.',
+                    text: this.folderSearchTerm ? 'No folders match your search.' : 'No folders available or all folders are ignored.',
                     cls: 'text-muted'
                 });
                 return;
@@ -275,6 +358,10 @@ export class SettingsTab extends PluginSettingTab {
                 .setName("Select Folder")
                 .setDesc("Choose a folder to configure its specific default deck and tags.");
 
+            const statusBadge = dropdownSetting.descEl.createDiv();
+            statusBadge.style.marginTop = "6px";
+            statusBadge.style.fontWeight = "bold";
+
             dropdownSetting.addDropdown(cb => {
                 const folderDecks = plugin.settings.FOLDER_DECKS || {};
                 const folderTags = plugin.settings.FOLDER_TAGS || {};
@@ -285,27 +372,49 @@ export class SettingsTab extends PluginSettingTab {
 
                     let label = f.path;
                     if (hasCustomDeck && hasCustomTags) {
-                        label = `✏️ ${f.path}  [Custom Deck & Tags]`;
+                        label = `${f.path}   🟢[Deck & Tags]`;
                     } else if (hasCustomDeck) {
-                        label = `✏️ ${f.path}  [Custom Deck]`;
+                        label = `${f.path}   🟡[Deck]`;
                     } else if (hasCustomTags) {
-                        label = `✏️ ${f.path}  [Custom Tags]`;
+                        label = `${f.path}   🔵[Tags]`;
                     }
 
                     cb.addOption(f.path, label);
                 }
-                cb.setValue(this.selectedFolder);
 
+                cb.setValue(this.selectedFolder);
                 cb.selectEl.style.fontWeight = "500";
-                cb.selectEl.style.color = "var(--text-accent)";
+
+                const updateBadge = (folderPath: string) => {
+                    const hasCustomDeck = Boolean(folderDecks[folderPath] && folderDecks[folderPath].trim() !== "");
+                    const hasCustomTags = Boolean(folderTags[folderPath] && folderTags[folderPath].trim() !== "");
+
+                    if (hasCustomDeck && hasCustomTags) {
+                        statusBadge.setText("Active: Custom Deck & Tags");
+                        statusBadge.style.color = "var(--color-green)";
+                    } else if (hasCustomDeck) {
+                        statusBadge.setText("Active: Custom Deck Only");
+                        statusBadge.style.color = "var(--color-yellow)";
+                    } else if (hasCustomTags) {
+                        statusBadge.setText("Active: Custom Tags Only");
+                        statusBadge.style.color = "var(--color-blue)";
+                    } else {
+                        statusBadge.setText("Active: Default Vault Settings");
+                        statusBadge.style.color = "var(--text-muted)";
+                    }
+                };
+
+                updateBadge(this.selectedFolder);
 
                 cb.onChange(value => {
                     this.selectedFolder = value;
+                    updateBadge(value);
                     this.renderFolderSettings(settingsContainer);
                 })
             });
 
             foldersWrapper.insertBefore(dropdownSetting.settingEl, settingsContainer);
+
             this.renderFolderSettings(settingsContainer);
         };
 
@@ -331,9 +440,7 @@ export class SettingsTab extends PluginSettingTab {
     setup_syntax() {
         let {containerEl} = this;
         const plugin = (this as any).plugin
-
         new Setting(containerEl).setHeading().setName('Syntax Settings')
-
         for (let key of Object.keys(plugin.settings["Syntax"])) {
             if (key === "Begin Note" || key === "End Note") {
                 new Setting(containerEl)
@@ -341,10 +448,6 @@ export class SettingsTab extends PluginSettingTab {
                     .addTextArea(text => {
                         text.setValue(plugin.settings["Syntax"][key])
                         text.inputEl.style.resize = "both"
-                        text.inputEl.style.minWidth = "200px"
-                        text.inputEl.style.minHeight = "36px"
-                        text.inputEl.rows = 1
-                        text.inputEl.cols = 19
                         text.onChange(value => {
                             plugin.settings["Syntax"][key] = value
                             plugin.saveAllData().catch(console.error)
@@ -538,7 +641,7 @@ export class SettingsTab extends PluginSettingTab {
 
         if (ignoreSetting.settingEl.querySelector('textarea')) {
             const textarea = ignoreSetting.settingEl.querySelector('textarea') as HTMLTextAreaElement
-            textarea.rows = 10
+            textarea.rows = 4
             textarea.cols = 30
         }
     }
