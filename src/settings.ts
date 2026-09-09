@@ -440,9 +440,7 @@ export class SettingsTab extends PluginSettingTab {
     setup_syntax() {
         let {containerEl} = this;
         const plugin = (this as any).plugin
-
         new Setting(containerEl).setHeading().setName('Syntax Settings')
-
         for (let key of Object.keys(plugin.settings["Syntax"])) {
             if (key === "Begin Note" || key === "End Note") {
                 new Setting(containerEl)
@@ -450,10 +448,6 @@ export class SettingsTab extends PluginSettingTab {
                     .addTextArea(text => {
                         text.setValue(plugin.settings["Syntax"][key])
                         text.inputEl.style.resize = "both"
-                        text.inputEl.style.minWidth = "200px"
-                        text.inputEl.style.minHeight = "36px"
-                        text.inputEl.rows = 1
-                        text.inputEl.cols = 19
                         text.onChange(value => {
                             plugin.settings["Syntax"][key] = value
                             plugin.saveAllData().catch(console.error)
@@ -647,7 +641,7 @@ export class SettingsTab extends PluginSettingTab {
 
         if (ignoreSetting.settingEl.querySelector('textarea')) {
             const textarea = ignoreSetting.settingEl.querySelector('textarea') as HTMLTextAreaElement
-            textarea.rows = 10
+            textarea.rows = 4
             textarea.cols = 30
         }
     }
