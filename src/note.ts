@@ -252,6 +252,7 @@ export class RegexNote {
     curly_cloze: boolean
     highlights_to_cloze: boolean
     formatter: FormatConverter
+    custom_deck: string | null = null
 
     constructor(
         match: RegExpMatchArray,
@@ -265,8 +266,30 @@ export class RegexNote {
     ) {
         this.match = match
         this.note_type = note_type
+
         this.identifier = id ? parseInt(this.match.pop() || "") : null
+
         this.tags = tags ? (this.match.pop()?.slice(TAG_PREFIX.length).split(TAG_SEP) || []) : []
+
+        if (this.match.groups) {
+
+            if (this.match.groups.tags) {
+                const extractedTags = this.match.groups.tags
+                    .split(/[\s,]+/)
+                    .map(t => t.trim())
+                    .filter(t => t !== "")
+
+                this.tags.push(...extractedTags)
+            }
+
+            if (this.match.groups.deck) {
+                const extractedDeck = this.match.groups.deck.trim()
+                if (extractedDeck) {
+                    this.custom_deck = extractedDeck
+                }
+            }
+        }
+
         this.field_names = fields_dict[note_type] || []
         this.curly_cloze = curly_cloze
         this.formatter = formatter
@@ -290,6 +313,8 @@ export class RegexNote {
     }
 
     parse(deck: string, url: string = "", frozen_fields_dict: FROZEN_FIELDS_DICT, data: FileData, context: string): AnkiConnectNoteAndID {
-        return parseNoteBody(this.note_type, this.identifier, this.tags, this.getFields(), deck, url, frozen_fields_dict, data, context, this.formatter)
+        const finalDeck = this.custom_deck ? this.custom_deck : deck;
+
+        return parseNoteBody(this.note_type, this.identifier, this.tags, this.getFields(), finalDeck, url, frozen_fields_dict, data, context, this.formatter)
     }
 }
