@@ -157,10 +157,14 @@ export class Note extends AbstractNote {
     }
 
     getTags(): string[] {
-        if ((this.split_text[this.split_text.length - 1] || "").startsWith(TAG_PREFIX)) {
-            return (this.split_text.pop() || "").slice(TAG_PREFIX.length).split(TAG_SEP)
+        const lastLine = this.split_text[this.split_text.length - 1] || "";
+        const tag_match = lastLine.match(/^(?:<!--)?Tags: (.*?)(?:-->)?\s*$/);
+
+        if (tag_match) {
+            this.split_text.pop();
+            return tag_match[1]!.split(TAG_SEP);
         } else {
-            return []
+            return [];
         }
     }
 
@@ -191,7 +195,7 @@ export class Note extends AbstractNote {
 }
 
 export class InlineNote extends AbstractNote {
-    static TAG_REGEXP: RegExp = /Tags: (.*)/;
+    static TAG_REGEXP: RegExp = /(?:<!--)?Tags: (.*?)(?:-->)?\s*$/;
     static ID_REGEXP: RegExp = /(?:<!--)?ID: (\d+)/;
     static TYPE_REGEXP: RegExp = /\[(.*?)\]/;
 
