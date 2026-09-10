@@ -44,7 +44,8 @@ export function formatFields(fields: Record<string, string>, note_type: string, 
 export function parseNoteBody(
     note_type: string, identifier: number | null, tags: string[], fields: Record<string, string>,
     deck: string, url: string, frozen_fields_dict: FROZEN_FIELDS_DICT, data: FileData, context: string,
-    formatter: FormatConverter
+    formatter: FormatConverter,
+    block_id?: string
 ): AnkiConnectNoteAndID {
     let template = JSON.parse(JSON.stringify(data.template))
     template["modelName"] = note_type
@@ -52,7 +53,7 @@ export function parseNoteBody(
 
     const file_link_fields = data.file_link_fields
     if (url) {
-        formatter.format_note_with_url(template, url, file_link_fields[note_type] || "")
+        formatter.format_note_with_url(template, url, file_link_fields[note_type] || "", block_id)
     }
 
     if (Object.keys(frozen_fields_dict).length) {
@@ -257,6 +258,7 @@ export class RegexNote {
     highlights_to_cloze: boolean
     formatter: FormatConverter
     custom_deck: string | null = null
+    block_id: string | null = null
 
     constructor(
         match: RegExpMatchArray,
@@ -292,6 +294,11 @@ export class RegexNote {
                     this.custom_deck = extractedDeck
                 }
             }
+
+            const rawBlock = this.match.groups.blockID || this.match.groups.block_id;
+            if (rawBlock) {
+                this.block_id = rawBlock.trim();
+            }
         }
 
         this.field_names = fields_dict[note_type] || []
@@ -319,6 +326,18 @@ export class RegexNote {
     parse(deck: string, url: string = "", frozen_fields_dict: FROZEN_FIELDS_DICT, data: FileData, context: string): AnkiConnectNoteAndID {
         const finalDeck = this.custom_deck ? this.custom_deck : deck;
 
-        return parseNoteBody(this.note_type, this.identifier, this.tags, this.getFields(), finalDeck, url, frozen_fields_dict, data, context, this.formatter)
+        return parseNoteBody(
+            this.note_type,
+            this.identifier,
+            this.tags,
+            this.getFields(),
+            finalDeck,
+            url,
+            frozen_fields_dict,
+            data,
+            context,
+            this.formatter,
+            this.block_id || undefined
+        )
     }
 }

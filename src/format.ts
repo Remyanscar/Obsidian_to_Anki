@@ -55,8 +55,39 @@ export class FormatConverter {
         return "obsidian://open?vault=" + encodeURIComponent(this.vault_name) + String.raw`&file=` + encodeURIComponent(link)
     }
 
-    format_note_with_url(note: AnkiConnectNote, url: string, field: string): void {
-        note.fields[field] += '<br><a href="' + url + '" class="obsidian-link">Obsidian</a>'
+    format_note_with_url(note: AnkiConnectNote, url: string, field: string, blockId?: string): void {
+        if (!field) return;
+
+        const cleanBlockId = blockId ? encodeURIComponent(blockId.replace(/^\^/, "")) : "";
+        const anchor = cleanBlockId ? `%23%5E${cleanBlockId}` : "";
+        const targetUrl = `${url}${anchor}`;
+
+        const imgStyle = [
+            "width: 1em !important",
+            "height: 1em !important",
+            "max-width: 1em !important",
+            "max-height: 1em !important",
+            "margin: 0 !important",
+            "display: inline-block !important",
+            "vertical-align: -0.15em",
+            "pointer-events: none",
+            "transform: scale(1.3) !important",
+            "transform-origin: right center !important"
+        ].join("; ");
+
+        const onErrorScript = "this.onerror=null; this.parentElement.style.textDecoration=''; this.outerHTML='Obsidian';";
+        const imgTag = `<img src="https://cdn.simpleicons.org/obsidian/7C3AED" alt="Obsidian" style="${imgStyle};" onerror="${onErrorScript}">`;
+
+        const pStyle = [
+            "text-align: right !important",
+            "width: 100% !important",
+            "align-self: flex-end !important",
+            "margin: 0 !important"
+        ].join("; ");
+
+        const linkHtml = `<p style="${pStyle};"><a href="${targetUrl}" class="obsidian-link" style="text-decoration: none; display: inline-block !important;">${imgTag}</a></p>`;
+
+        note.fields[field] += `\n${linkHtml}`;
     }
 
     format_note_with_frozen_fields(note: AnkiConnectNote, frozen_fields_dict: Record<string, Record<string, string>>): void {
