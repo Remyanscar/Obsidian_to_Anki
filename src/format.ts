@@ -5,13 +5,14 @@ import {Converter} from 'showdown'
 import {CachedMetadata} from 'obsidian'
 import * as c from './constants'
 import showdownHighlight from 'showdown-highlight'
+import { obsidianCallouts } from './callouts'
 
-const ANKI_MATH_REGEXP: RegExp = /(\\\[[\s\S]*?\\\])|(\\\([\s\S]*?\\\))/g
+const ANKI_MATH_REGEXP: RegExp = /(\\\[[\s\S]*?\\])|(\\\([\s\S]*?\\\))/g
 const HIGHLIGHT_REGEXP: RegExp = /==(.*?)==/g
 const MATH_REPLACE: string = "OBSTOANKIMATH"
 const INLINE_CODE_REPLACE: string = "OBSTOANKICODEINLINE"
 const DISPLAY_CODE_REPLACE: string = "OBSTOANKICODEDISPLAY"
-const CLOZE_REGEXP: RegExp = /(?:(?<!{){(?:c?(\d+)[:|])?(?!{))((?:[^\n][\n]?)+?)(?:(?<!})}(?!}))/g
+const CLOZE_REGEXP: RegExp = /(?<!{){(?:c?(\d+)[:|])?(?!{)((?:[^\n]\n?)+?)(?<!})}(?!})/g
 
 const IMAGE_EXTS: string[] = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".tiff"]
 const AUDIO_EXTS: string[] = [".wav", ".m4a", ".flac", ".mp3", ".wma", ".aac", ".webm"]
@@ -26,7 +27,8 @@ let converter: Converter = new Converter({
     tasklists: true,
     simpleLineBreaks: true,
     requireSpaceBeforeHeadingText: true,
-    extensions: [showdownHighlight]
+    splitAdjacentBlockquotes: true,
+    extensions: [showdownHighlight, obsidianCallouts]
 })
 
 function escapeHtml(unsafe: string): string {
@@ -76,7 +78,8 @@ export class FormatConverter {
         ].join("; ");
 
         const onErrorScript = "this.onerror=null; this.parentElement.style.textDecoration=''; this.outerHTML='Obsidian';";
-        const imgTag = `<img src="https://cdn.simpleicons.org/obsidian/7C3AED" alt="Obsidian" style="${imgStyle};" onerror="${onErrorScript}">`;
+        // noinspection HtmlDeprecatedAttribute
+        const imgTag = '<img src="https://cdn.simpleicons.org/obsidian/7C3AED" alt="Obsidian" style="' + imgStyle + ';" onerror="' + onErrorScript + '">';
 
         const pStyle = [
             "text-align: right !important",
